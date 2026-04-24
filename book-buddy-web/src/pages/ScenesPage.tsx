@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { BottomNav } from '../components/BottomNav'
 import type { Scene } from '../lib/api'
+import { excerptRichText } from '../lib/richText'
 import { useProjects } from '../store/useProjectStore'
 import { C } from '../styles/tokens'
 
@@ -98,7 +99,9 @@ export function ScenesPage() {
         {scenes.map((item) => (
           <button key={item.id} type="button" onClick={() => openForEdit(item)} style={sceneCardStyle}>
             <div style={{ color: C.ink, fontWeight: 600, marginBottom: 6 }}>{item.title || 'Untitled scene'}</div>
-            <div style={{ color: C.inkSoft, lineHeight: 1.5 }}>{(item.summary || 'Tap to add scene notes.').slice(0, 120)}</div>
+            <div style={{ color: C.inkSoft, lineHeight: 1.5 }}>
+              {excerptRichText(item.summary || '', 'Tap to add scene notes.')}
+            </div>
           </button>
         ))}
       </div>

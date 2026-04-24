@@ -3,16 +3,18 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { BottomNav } from '../components/BottomNav'
 import { TopBar } from '../components/TopBar'
 import type { Character } from '../lib/api'
+import { excerptRichText } from '../lib/richText'
 import { useProjects } from '../store/useProjectStore'
 import { C } from '../styles/tokens'
 
 const roles = ['Protagonist', 'Antagonist', 'Supporting', 'Minor']
 
 function excerptFromCharacter(character: Character) {
-  return (
+  return excerptRichText(
     character.motivations ||
-    character.backstory ||
-    character.physicalDescription ||
+      character.backstory ||
+      character.physicalDescription ||
+      '',
     'Tap to add details.'
   )
 }
@@ -113,9 +115,7 @@ export function CharactersPage() {
             <div style={{ color: C.ink, fontWeight: 600, marginBottom: 6 }}>
               {character.name || 'Untitled character'}
             </div>
-            <div style={{ color: C.inkSoft, lineHeight: 1.5 }}>
-              {excerptFromCharacter(character).slice(0, 120)}
-            </div>
+            <div style={{ color: C.inkSoft, lineHeight: 1.5 }}>{excerptFromCharacter(character)}</div>
           </button>
         ))}
       </div>

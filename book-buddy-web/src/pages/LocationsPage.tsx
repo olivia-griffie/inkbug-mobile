@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { BottomNav } from '../components/BottomNav'
 import type { LocationItem } from '../lib/api'
+import { excerptRichText } from '../lib/richText'
 import { useProjects } from '../store/useProjectStore'
 import { C } from '../styles/tokens'
 
@@ -84,7 +85,9 @@ export function LocationsPage() {
         {locations.map((item) => (
           <button key={item.id} type="button" onClick={() => openForEdit(item)} style={sharedCardStyle}>
             <div style={{ color: C.ink, fontWeight: 600, marginBottom: 6 }}>{item.name || 'Untitled location'}</div>
-            <div style={{ color: C.inkSoft, lineHeight: 1.5 }}>{(item.description || 'Tap to add details.').slice(0, 120)}</div>
+            <div style={{ color: C.inkSoft, lineHeight: 1.5 }}>
+              {excerptRichText(item.description || '', 'Tap to add details.')}
+            </div>
           </button>
         ))}
       </div>

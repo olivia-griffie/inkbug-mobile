@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { BottomNav } from '../components/BottomNav'
 import type { PlotSection } from '../lib/api'
+import { excerptRichText } from '../lib/richText'
 import { useProjects } from '../store/useProjectStore'
 import { C } from '../styles/tokens'
 
@@ -87,7 +88,9 @@ export function PlotPage() {
         {plotSections.map((item) => (
           <button key={item.id} type="button" onClick={() => openForEdit(item)} style={cardButtonStyle}>
             <div style={{ color: C.ink, fontWeight: 600, marginBottom: 6 }}>{item.name || 'Untitled section'}</div>
-            <div style={{ color: C.inkSoft, lineHeight: 1.5 }}>{(item.summary || 'Tap to add a summary.').slice(0, 120)}</div>
+            <div style={{ color: C.inkSoft, lineHeight: 1.5 }}>
+              {excerptRichText(item.summary || '', 'Tap to add a summary.')}
+            </div>
           </button>
         ))}
       </div>

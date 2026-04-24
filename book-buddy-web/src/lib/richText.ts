@@ -132,3 +132,9 @@ export function richTextToPlainText(value = '') {
 export function countRichTextWords(value = '') {
   return richTextToPlainText(value).split(/\s+/).filter(Boolean).length
 }
+
+export function excerptRichText(value = '', fallback = 'No details yet.', maxLength = 120) {
+  const plain = richTextToPlainText(value).replace(/\s+/g, ' ').trim()
+  const text = plain || fallback
+  return text.length > maxLength ? `${text.slice(0, maxLength)}…` : text
+}
