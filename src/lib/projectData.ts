@@ -9,6 +9,7 @@ import {
   Scene,
   UserProjectRow,
 } from '../types/bookBuddy';
+import { toDisplayText } from './richText';
 
 function asArray<T>(value: unknown): T[] {
   return Array.isArray(value) ? (value as T[]) : [];
@@ -46,8 +47,8 @@ export function normalizeProject(row: UserProjectRow): NormalizedProject {
     (item, index) => ({
       id: asString(item.id, `chapter-${index}`),
       title: asString(item.title, `Chapter ${index + 1}`),
-      body: asString(item.body || item.content),
-      summary: asString(item.summary),
+      body: toDisplayText(item.body || item.content),
+      summary: toDisplayText(item.summary),
       status: asString(item.status),
     }),
   );
@@ -58,7 +59,7 @@ export function normalizeProject(row: UserProjectRow): NormalizedProject {
       id: asString(item.id, `character-${index}`),
       name: asString(item.name, `Character ${index + 1}`),
       role: asString(item.role || item.type),
-      description: asString(item.description || item.notes),
+      description: toDisplayText(item.description || item.notes),
     }),
   );
 
@@ -66,8 +67,8 @@ export function normalizeProject(row: UserProjectRow): NormalizedProject {
     pickArray(raw, ['plotSections', 'plot', 'story_beats']),
     (item, index) => ({
       id: asString(item.id, `plot-${index}`),
-      title: asString(item.title, `Beat ${index + 1}`),
-      summary: asString(item.summary || item.description),
+      title: asString(item.title, `Section Target ${index + 1}`),
+      summary: toDisplayText(item.summary || item.description),
       status: asString(item.status),
     }),
   );
@@ -77,7 +78,7 @@ export function normalizeProject(row: UserProjectRow): NormalizedProject {
     (item, index) => ({
       id: asString(item.id, `location-${index}`),
       name: asString(item.name, `Location ${index + 1}`),
-      description: asString(item.description || item.notes),
+      description: toDisplayText(item.description || item.notes),
     }),
   );
 
@@ -86,7 +87,7 @@ export function normalizeProject(row: UserProjectRow): NormalizedProject {
     (item, index) => ({
       id: asString(item.id, `scene-${index}`),
       title: asString(item.title, `Scene ${index + 1}`),
-      summary: asString(item.summary || item.description),
+      summary: toDisplayText(item.summary || item.description),
       chapterId: asString(item.chapterId || item.chapter_id),
     }),
   );
@@ -96,7 +97,7 @@ export function normalizeProject(row: UserProjectRow): NormalizedProject {
     (item, index) => ({
       id: asString(item.id, `prompt-${index}`),
       title: asString(item.title, `Prompt ${index + 1}`),
-      content: asString(item.content || item.prompt),
+      content: toDisplayText(item.content || item.prompt),
       completed: Boolean(item.completed || item.done),
     }),
   );
@@ -109,8 +110,8 @@ export function normalizeProject(row: UserProjectRow): NormalizedProject {
       asString(raw.name) ||
       'Untitled Project',
     description:
-      asString(raw.description) ||
-      asString(raw.logline) ||
+      toDisplayText(raw.description) ||
+      toDisplayText(raw.logline) ||
       'Your synced writing workspace on the go.',
     genre: asString(raw.genre, 'Uncategorized'),
     updatedAt: row.updated_at,

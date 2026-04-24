@@ -11,8 +11,8 @@ export function PlotPage() {
     <ProjectGate title="Plot">
       {!project?.plotSections.length ? (
         <EmptyState
-          title="No plot beats yet"
-          description="Plot sections from your synced project will appear here."
+          title="No section targets yet"
+          description="Section targets from your synced project will appear here."
         />
       ) : null}
 
@@ -20,7 +20,7 @@ export function PlotPage() {
         <ListCard
           key={section.id}
           title={section.title}
-          subtitle={`Beat ${index + 1}${section.status ? ` • ${section.status}` : ''}`}
+          subtitle={`Section Target ${index + 1}${section.status ? ` • ${section.status}` : ''}`}
           body={section.summary || 'No summary provided.'}
         />
       ))}

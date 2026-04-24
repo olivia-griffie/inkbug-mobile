@@ -2,6 +2,7 @@ import { useParams } from 'react-router-dom';
 import { EmptyState, ListCard } from '../components/AppFrame';
 import { ProjectGate } from '../components/ProjectGate';
 import { useProject } from '../hooks/useProject';
+import { excerptText } from '../lib/richText';
 
 export function ChaptersPage() {
   const { id } = useParams();
@@ -22,7 +23,7 @@ export function ChaptersPage() {
           href={`/project/${project.id}/chapters/${chapter.id}`}
           title={chapter.title}
           subtitle={`Chapter ${index + 1}${chapter.status ? ` • ${chapter.status}` : ''}`}
-          body={chapter.summary || chapter.body?.slice(0, 140) || 'Open chapter'}
+          body={excerptText(chapter.summary || chapter.body || '', 'Open chapter', 140)}
         />
       ))}
     </ProjectGate>

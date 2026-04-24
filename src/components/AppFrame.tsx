@@ -3,12 +3,70 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import { C } from '../styles/tokens';
 import { contentStyle, shellStyle } from '../lib/ui';
 
-const navItems = [
-  { to: '/home', label: 'Home' },
-  { to: '/community', label: 'Community' },
-  { to: '/inbox', label: 'Inbox' },
-  { to: '/account', label: 'Account' },
+type NavItem = {
+  to: string;
+  label: string;
+  icon: 'home' | 'community' | 'inbox' | 'account';
+};
+
+const navItems: NavItem[] = [
+  { to: '/home', label: 'Home', icon: 'home' },
+  { to: '/community', label: 'Community', icon: 'community' },
+  { to: '/inbox', label: 'Inbox', icon: 'inbox' },
+  { to: '/account', label: 'Account', icon: 'account' },
 ];
+
+function FooterIcon({ kind, active }: { kind: NavItem['icon']; active: boolean }) {
+  const color = active ? 'white' : C.inkSoft;
+  const common = {
+    width: 18,
+    height: 18,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: color,
+    strokeWidth: 1.8,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+  };
+
+  if (kind === 'home') {
+    return (
+      <svg {...common}>
+        <path d="M5.25 10.3L12 4.75l6.75 5.55" />
+        <path d="M7.15 9.75V19h9.7V9.75" />
+        <path d="M10.1 19v-4.25h3.8V19" />
+      </svg>
+    );
+  }
+
+  if (kind === 'community') {
+    return (
+      <svg {...common}>
+        <path d="M9 10.5a2.75 2.75 0 1 0 0-5.5 2.75 2.75 0 0 0 0 5.5Z" />
+        <path d="M16.2 11.6a2.15 2.15 0 1 0 0-4.3 2.15 2.15 0 0 0 0 4.3Z" />
+        <path d="M4.5 18.2c.75-2.15 2.7-3.35 5.45-3.35 2.5 0 4.4 1.06 5.2 2.97" />
+        <path d="M14.35 17.55c.52-1.18 1.73-1.85 3.38-1.85 1.02 0 1.92.27 2.77.82" />
+      </svg>
+    );
+  }
+
+  if (kind === 'inbox') {
+    return (
+      <svg {...common}>
+        <path d="M4.75 7.75h14.5v8.75H14.9l-1.8 2h-2.2l-1.8-2H4.75V7.75Z" />
+        <path d="M8.5 11.15h7" />
+        <path d="M8.5 14.1h4.2" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg {...common}>
+      <path d="M12 12a3.15 3.15 0 1 0 0-6.3 3.15 3.15 0 0 0 0 6.3Z" />
+      <path d="M6.3 18.45c.95-2.35 3.05-3.55 5.7-3.55 2.68 0 4.78 1.2 5.7 3.55" />
+    </svg>
+  );
+}
 
 export function AppFrame({
   title,
@@ -85,7 +143,7 @@ export function AppFrame({
                 key={item.to}
                 to={item.to}
                 style={{
-                  padding: '12px 8px',
+                  padding: '9px 8px 10px',
                   textAlign: 'center',
                   borderRadius: 999,
                   fontSize: 13,
@@ -94,9 +152,13 @@ export function AppFrame({
                   background: active
                     ? `linear-gradient(135deg, ${C.coral} 0%, ${C.orange} 100%)`
                     : 'transparent',
+                  display: 'grid',
+                  justifyItems: 'center',
+                  gap: 4,
                 }}
               >
-                {item.label}
+                <FooterIcon kind={item.icon} active={active} />
+                <span>{item.label}</span>
               </NavLink>
             );
           })}

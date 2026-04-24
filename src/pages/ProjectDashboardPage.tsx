@@ -2,6 +2,7 @@ import { useParams } from 'react-router-dom';
 import { ProjectGate } from '../components/ProjectGate';
 import { useProject } from '../hooks/useProject';
 import { summarizeWordCount } from '../lib/projectData';
+import { toDisplayText } from '../lib/richText';
 import { cardStyle } from '../lib/ui';
 import { C } from '../styles/tokens';
 
@@ -13,12 +14,19 @@ export function ProjectDashboardPage() {
     return <ProjectGate />;
   }
 
+  const storySnapshot =
+    project.plotSections[0]?.summary ||
+    toDisplayText(project.raw.synopsis) ||
+    'Your synced section targets, scenes, and prompts are ready in the tabs above.';
+
   return (
     <ProjectGate title={project.title}>
       <div style={{ display: 'grid', gap: 14 }}>
         <div style={{ ...cardStyle, padding: 20 }}>
           <div style={{ color: C.coral, fontWeight: 700, marginBottom: 10 }}>Overview</div>
-          <div style={{ fontFamily: 'Lora, serif', fontSize: 28, marginBottom: 10 }}>{project.title}</div>
+          <div style={{ fontFamily: 'Lora, serif', fontSize: 28, marginBottom: 10 }}>
+            {project.title}
+          </div>
           <div style={{ color: C.inkSoft, lineHeight: 1.6 }}>{project.description}</div>
         </div>
 
@@ -37,12 +45,8 @@ export function ProjectDashboardPage() {
         </div>
 
         <div style={{ ...cardStyle, padding: 20 }}>
-          <div style={{ fontWeight: 700, marginBottom: 10 }}>Story snapshot</div>
-          <div style={{ color: C.inkSoft, lineHeight: 1.6 }}>
-            {project.plotSections[0]?.summary ??
-              project.raw.synopsis?.toString() ??
-              'Your synced plot beats, scenes, and prompts are ready in the tabs above.'}
-          </div>
+          <div style={{ fontWeight: 700, marginBottom: 10 }}>Story Snapshot</div>
+          <div style={{ color: C.inkSoft, lineHeight: 1.6 }}>{storySnapshot}</div>
         </div>
       </div>
     </ProjectGate>
