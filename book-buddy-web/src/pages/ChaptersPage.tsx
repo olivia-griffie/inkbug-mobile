@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { BottomNav } from '../components/BottomNav'
 import { TopBar } from '../components/TopBar'
 import type { Chapter } from '../lib/api'
+import { countRichTextWords } from '../lib/richText'
 import { useAuthStore } from '../store/useAuthStore'
 import { useProjects } from '../store/useProjectStore'
 import { C } from '../styles/tokens'
@@ -13,7 +14,7 @@ function getChapterWordCount(chapter: Chapter) {
   }
 
   const content = typeof chapter.content === 'string' ? chapter.content : ''
-  return content.split(/\s+/).filter(Boolean).length
+  return countRichTextWords(content)
 }
 
 export function ChaptersPage() {

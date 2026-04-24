@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import type { Chapter } from '../lib/api'
+import {
+  countRichTextWords,
+  parseRichTextValue,
+  serializeRichTextValue,
+} from '../lib/richText'
 import { useAuthStore } from '../store/useAuthStore'
 import { useProjects } from '../store/useProjectStore'
 import { C } from '../styles/tokens'
 
 type SaveState = 'saved' | 'saving'
-
-function countWords(text: string) {
-  return text.split(/\s+/).filter(Boolean).length
-}
 
 function ensureChapter(chapter: Chapter | undefined, index: number): Chapter | null {
   if (!chapter) return null
@@ -21,9 +22,46 @@ function ensureChapter(chapter: Chapter | undefined, index: number): Chapter | n
     wordCount:
       typeof chapter.wordCount === 'number' && Number.isFinite(chapter.wordCount)
         ? chapter.wordCount
-        : countWords(typeof chapter.content === 'string' ? chapter.content : ''),
+        : countRichTextWords(typeof chapter.content === 'string' ? chapter.content : ''),
     section: typeof chapter.section === 'string' ? chapter.section : `Section ${index + 1}`,
   }
+}
+
+function BackIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke={C.ink} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M15 18l-6-6 6-6" />
+    </svg>
+  )
+}
+
+type ToolbarButtonProps = {
+  label: string
+  onClick: () => void
+  title: string
+}
+
+function ToolbarButton({ label, onClick, title }: ToolbarButtonProps) {
+  return (
+    <button
+      type="button"
+      title={title}
+      onMouseDown={(event) => event.preventDefault()}
+      onClick={onClick}
+      style={{
+        border: `1px solid ${C.border}`,
+        background: C.soft,
+        borderRadius: 10,
+        minWidth: 40,
+        height: 40,
+        padding: '0 10px',
+        color: C.ink,
+        fontWeight: 700,
+      }}
+    >
+      {label}
+    </button>
+  )
 }
 
 export function ChapterEditorPage() {
@@ -34,10 +72,11 @@ export function ChapterEditorPage() {
   const [fontSize, setFontSize] = useState(16)
   const [saveState, setSaveState] = useState<SaveState>('saved')
   const [titleDraft, setTitleDraft] = useState('')
-  const [contentDraft, setContentDraft] = useState('')
   const [sectionDraft, setSectionDraft] = useState('Draft')
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
+  const [editorHtml, setEditorHtml] = useState('<p><br></p>')
+  const editorRef = useRef<HTMLDivElement | null>(null)
   const latestSaveToken = useRef(0)
 
   const project = useMemo(
@@ -54,27 +93,40 @@ export function ChapterEditorPage() {
   const chapters = Array.isArray(project?.chapters) ? project.chapters : []
   const chapterIndex = chapters.findIndex((item) => item.id === cid)
   const chapter = ensureChapter(chapterIndex >= 0 ? chapters[chapterIndex] : undefined, chapterIndex)
+  const wordCount = countRichTextWords(serializeRichTextValue(editorHtml))
 
   useEffect(() => {
     if (!chapter) return
+
+    const parsed = parseRichTextValue(chapter.content ?? '')
     setTitleDraft(chapter.title ?? '')
-    setContentDraft(chapter.content ?? '')
     setSectionDraft(chapter.section ?? 'Draft')
+    setEditorHtml(parsed.html || '<p><br></p>')
     setIsDirty(false)
     setSaveState('saved')
+    setFontSize(parsed.settings.fontSize ? Number(parsed.settings.fontSize) || 16 : 16)
   }, [chapter?.id])
 
-  const wordCount = countWords(contentDraft)
+  useEffect(() => {
+    if (editorRef.current && editorRef.current.innerHTML !== editorHtml) {
+      editorRef.current.innerHTML = editorHtml
+    }
+  }, [editorHtml])
 
   const buildUpdatedProject = () => {
     if (!project || !chapter || chapterIndex < 0) return null
 
+    const content = serializeRichTextValue(editorHtml, {
+      fontSize: String(fontSize),
+      lineHeight: '1.7',
+    })
+
     const updatedChapter: Chapter = {
       ...chapter,
       title: titleDraft.trim() || `Chapter ${chapterIndex + 1}`,
-      content: contentDraft,
+      content,
       section: sectionDraft,
-      wordCount,
+      wordCount: countRichTextWords(content),
     }
 
     const nextChapters = chapters.map((item, index) =>
@@ -82,11 +134,11 @@ export function ChapterEditorPage() {
     )
 
     const currentWordCount = nextChapters.reduce((sum, item) => {
-      const content = typeof item.content === 'string' ? item.content : ''
+      const contentValue = typeof item.content === 'string' ? item.content : ''
       const count =
         typeof item.wordCount === 'number' && Number.isFinite(item.wordCount)
           ? item.wordCount
-          : countWords(content)
+          : countRichTextWords(contentValue)
       return sum + count
     }, 0)
 
@@ -123,7 +175,7 @@ export function ChapterEditorPage() {
     }, 1500)
 
     return () => window.clearTimeout(timeout)
-  }, [titleDraft, contentDraft, sectionDraft, isDirty, chapter?.id])
+  }, [titleDraft, sectionDraft, editorHtml, fontSize, isDirty, chapter?.id])
 
   if (!project || !chapter) {
     return <div style={{ padding: 16 }}>Chapter not found.</div>
@@ -137,6 +189,18 @@ export function ChapterEditorPage() {
     }
 
     navigate(-1)
+  }
+
+  function syncEditor() {
+    const nextHtml = editorRef.current?.innerHTML || '<p><br></p>'
+    setEditorHtml(nextHtml)
+    setIsDirty(true)
+  }
+
+  function runCommand(command: string, value?: string) {
+    editorRef.current?.focus()
+    document.execCommand(command, false, value)
+    syncEditor()
   }
 
   return (
@@ -166,11 +230,14 @@ export function ChapterEditorPage() {
             border: 0,
             background: 'transparent',
             color: C.ink,
-            fontSize: '1.2rem',
+            width: 28,
+            height: 28,
+            display: 'grid',
+            placeItems: 'center',
           }}
           aria-label="Go back"
         >
-          ←
+          <BackIcon />
         </button>
 
         <div style={{ minWidth: 0 }}>
@@ -221,11 +288,29 @@ export function ChapterEditorPage() {
         </div>
       </div>
 
-      <textarea
-        value={contentDraft}
-        onChange={(event) => {
-          setContentDraft(event.target.value)
-          setIsDirty(true)
+      <div
+        style={{
+          display: 'flex',
+          gap: 8,
+          padding: '12px 16px',
+          background: C.soft,
+          borderBottom: `1px solid ${C.borderSoft}`,
+          overflowX: 'auto',
+        }}
+      >
+        <ToolbarButton label="B" title="Bold" onClick={() => runCommand('bold')} />
+        <ToolbarButton label="I" title="Italic" onClick={() => runCommand('italic')} />
+        <ToolbarButton label="U" title="Underline" onClick={() => runCommand('underline')} />
+        <ToolbarButton label="• List" title="Bullet list" onClick={() => runCommand('insertUnorderedList')} />
+      </div>
+
+      <div
+        ref={editorRef}
+        contentEditable
+        suppressContentEditableWarning
+        onInput={syncEditor}
+        onPaste={() => {
+          window.setTimeout(syncEditor, 0)
         }}
         style={{
           flex: 1,
@@ -234,9 +319,10 @@ export function ChapterEditorPage() {
           lineHeight: 1.7,
           border: 'none',
           background: C.cream,
-          resize: 'none',
           outline: 'none',
           color: C.ink,
+          overflowY: 'auto',
+          whiteSpace: 'normal',
         }}
       />
 
@@ -256,7 +342,10 @@ export function ChapterEditorPage() {
         <div style={{ display: 'flex', gap: 8 }}>
           <button
             type="button"
-            onClick={() => setFontSize((size) => Math.max(14, size - 1))}
+            onClick={() => {
+              setFontSize((size) => Math.max(14, size - 1))
+              setIsDirty(true)
+            }}
             style={{
               border: `1px solid ${C.border}`,
               background: C.soft,
@@ -269,7 +358,10 @@ export function ChapterEditorPage() {
           </button>
           <button
             type="button"
-            onClick={() => setFontSize((size) => Math.min(24, size + 1))}
+            onClick={() => {
+              setFontSize((size) => Math.min(24, size + 1))
+              setIsDirty(true)
+            }}
             style={{
               border: `1px solid ${C.border}`,
               background: C.soft,
