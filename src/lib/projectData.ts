@@ -9,11 +9,7 @@ import {
   Scene,
   UserProjectRow,
 } from '../types/bookBuddy';
-import { toDisplayText } from './richText';
-
-function asArray<T>(value: unknown): T[] {
-  return Array.isArray(value) ? (value as T[]) : [];
-}
+import { richTextToPlainText } from './richText';
 
 function asRecord(value: unknown): JsonRecord {
   return value && typeof value === 'object' ? (value as JsonRecord) : {};
@@ -21,6 +17,12 @@ function asRecord(value: unknown): JsonRecord {
 
 function asString(value: unknown, fallback = ''): string {
   return typeof value === 'string' ? value : fallback;
+}
+
+function asStringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string' && item.length > 0)
+    : [];
 }
 
 function pickArray(raw: JsonRecord, keys: string[]) {
@@ -47,8 +49,8 @@ export function normalizeProject(row: UserProjectRow): NormalizedProject {
     (item, index) => ({
       id: asString(item.id, `chapter-${index}`),
       title: asString(item.title, `Chapter ${index + 1}`),
-      body: toDisplayText(item.body || item.content),
-      summary: toDisplayText(item.summary),
+      body: asString(item.body || item.content),
+      summary: asString(item.summary),
       status: asString(item.status),
     }),
   );
@@ -59,7 +61,7 @@ export function normalizeProject(row: UserProjectRow): NormalizedProject {
       id: asString(item.id, `character-${index}`),
       name: asString(item.name, `Character ${index + 1}`),
       role: asString(item.role || item.type),
-      description: toDisplayText(item.description || item.notes),
+      description: asString(item.description || item.notes),
     }),
   );
 
@@ -67,8 +69,8 @@ export function normalizeProject(row: UserProjectRow): NormalizedProject {
     pickArray(raw, ['plotSections', 'plot', 'story_beats']),
     (item, index) => ({
       id: asString(item.id, `plot-${index}`),
-      title: asString(item.title, `Section Target ${index + 1}`),
-      summary: toDisplayText(item.summary || item.description),
+      title: asString(item.title || item.label, `Section Target ${index + 1}`),
+      summary: asString(item.summary || item.description || item.notes),
       status: asString(item.status),
     }),
   );
@@ -78,7 +80,7 @@ export function normalizeProject(row: UserProjectRow): NormalizedProject {
     (item, index) => ({
       id: asString(item.id, `location-${index}`),
       name: asString(item.name, `Location ${index + 1}`),
-      description: toDisplayText(item.description || item.notes),
+      description: asString(item.description || item.notes),
     }),
   );
 
@@ -87,7 +89,7 @@ export function normalizeProject(row: UserProjectRow): NormalizedProject {
     (item, index) => ({
       id: asString(item.id, `scene-${index}`),
       title: asString(item.title, `Scene ${index + 1}`),
-      summary: toDisplayText(item.summary || item.description),
+      summary: asString(item.summary || item.description),
       chapterId: asString(item.chapterId || item.chapter_id),
     }),
   );
@@ -97,7 +99,7 @@ export function normalizeProject(row: UserProjectRow): NormalizedProject {
     (item, index) => ({
       id: asString(item.id, `prompt-${index}`),
       title: asString(item.title, `Prompt ${index + 1}`),
-      content: toDisplayText(item.content || item.prompt),
+      content: asString(item.content || item.prompt),
       completed: Boolean(item.completed || item.done),
     }),
   );
@@ -110,12 +112,14 @@ export function normalizeProject(row: UserProjectRow): NormalizedProject {
       asString(raw.name) ||
       'Untitled Project',
     description:
-      toDisplayText(raw.description) ||
-      toDisplayText(raw.logline) ||
+      asString(raw.description) ||
+      asString(raw.logline) ||
       'Your synced writing workspace on the go.',
     genre: asString(raw.genre, 'Uncategorized'),
     updatedAt: row.updated_at,
     raw,
+    isPublic: Boolean(raw.isPublic),
+    publishedChapterIds: asStringArray(raw.publishedChapterIds),
     chapters,
     characters,
     plotSections,
@@ -125,13 +129,86 @@ export function normalizeProject(row: UserProjectRow): NormalizedProject {
   };
 }
 
+export function denormalizeProject(project: NormalizedProject): JsonRecord {
+  return {
+    ...project.raw,
+    title: project.title,
+    description: project.description,
+    genre: project.genre,
+    isPublic: project.isPublic,
+    publishedChapterIds: project.publishedChapterIds,
+    chapters: project.chapters.map((chapter) => ({
+      ...asRecord(
+        pickArray(project.raw, ['chapters', 'chapter_list']).find((item) => asRecord(item).id === chapter.id),
+      ),
+      id: chapter.id,
+      title: chapter.title,
+      content: chapter.body || '',
+      body: chapter.body || '',
+      summary: chapter.summary || '',
+      status: chapter.status || '',
+    })),
+    characters: project.characters.map((character) => ({
+      ...asRecord(
+        pickArray(project.raw, ['characters', 'characterProfiles']).find(
+          (item) => asRecord(item).id === character.id,
+        ),
+      ),
+      id: character.id,
+      name: character.name,
+      role: character.role || '',
+      description: character.description || '',
+    })),
+    plotSections: project.plotSections.map((section) => ({
+      ...asRecord(
+        pickArray(project.raw, ['plotSections', 'plot', 'story_beats']).find(
+          (item) => asRecord(item).id === section.id,
+        ),
+      ),
+      id: section.id,
+      title: section.title,
+      label: section.title,
+      summary: section.summary || '',
+      description: section.summary || '',
+      status: section.status || '',
+    })),
+    locations: project.locations.map((location) => ({
+      ...asRecord(
+        pickArray(project.raw, ['locations', 'settingLocations']).find(
+          (item) => asRecord(item).id === location.id,
+        ),
+      ),
+      id: location.id,
+      name: location.name,
+      description: location.description || '',
+    })),
+    scenes: project.scenes.map((scene) => ({
+      ...asRecord(
+        pickArray(project.raw, ['scenes', 'sceneCards']).find((item) => asRecord(item).id === scene.id),
+      ),
+      id: scene.id,
+      title: scene.title,
+      summary: scene.summary || '',
+      chapterId: scene.chapterId || '',
+      chapter_id: scene.chapterId || '',
+    })),
+    prompts: project.prompts.map((prompt) => ({
+      ...asRecord(
+        pickArray(project.raw, ['dailyPrompts', 'prompts']).find((item) => asRecord(item).id === prompt.id),
+      ),
+      id: prompt.id,
+      title: prompt.title,
+      content: prompt.content || '',
+      prompt: prompt.content || '',
+      completed: prompt.completed || false,
+    })),
+  };
+}
+
 export function findChapter(project: NormalizedProject, chapterId: string) {
   return project.chapters.find((chapter) => chapter.id === chapterId) ?? null;
 }
 
 export function summarizeWordCount(project: NormalizedProject) {
-  return project.chapters.reduce((sum, chapter) => {
-    const body = chapter.body ?? '';
-    return sum + body.split(/\s+/).filter(Boolean).length;
-  }, 0);
+  return project.chapters.reduce((sum, chapter) => sum + richTextToPlainText(chapter.body || '').split(/\s+/).filter(Boolean).length, 0);
 }

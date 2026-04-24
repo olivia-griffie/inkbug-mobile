@@ -61,10 +61,35 @@ export type NormalizedProject = {
   genre: string;
   updatedAt: string;
   raw: JsonRecord;
+  isPublic: boolean;
+  publishedChapterIds: string[];
   chapters: Chapter[];
   characters: Character[];
   plotSections: PlotSection[];
   locations: LocationItem[];
   scenes: Scene[];
   prompts: PromptItem[];
+};
+
+export type CommunityProject = {
+  id: string;
+  local_id: string;
+  owner_id: string;
+  is_public: boolean;
+  updated_at: string;
+  content: JsonRecord | null;
+  profiles?: {
+    username?: string | null;
+    display_name?: string | null;
+  } | null;
+  published_chapters?: PublishedChapterRow[];
+};
+
+export type PublishedChapterRow = {
+  id: string;
+  project_id: string;
+  chapter_id: string;
+  chapter_title: string | null;
+  content: string | null;
+  published_at: string;
 };
