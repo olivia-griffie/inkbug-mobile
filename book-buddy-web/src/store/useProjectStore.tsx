@@ -13,6 +13,7 @@ import {
   saveProject,
 } from '../lib/api'
 import type { Project } from '../lib/api'
+import { useAuthStore } from './useAuthStore'
 
 type ProjectStoreValue = {
   projects: Project[]
@@ -20,8 +21,8 @@ type ProjectStoreValue = {
   loading: boolean
   loadProjects: (userId: string) => Promise<void>
   setActiveProject: (project: Project | null) => void
-  saveActiveProject: (updated: Project, userId: string) => Promise<Project>
-  deleteProject: (id: string, userId: string) => Promise<void>
+  saveActiveProject: (updated: Project, userId?: string) => Promise<Project>
+  deleteProject: (id: string, userId?: string) => Promise<void>
   restoreActiveProject: () => void
 }
 
@@ -30,6 +31,7 @@ const ACTIVE_PROJECT_KEY = 'book-buddy-active-project-id'
 const ProjectStoreContext = createContext<ProjectStoreValue | null>(null)
 
 export function ProjectStoreProvider({ children }: PropsWithChildren) {
+  const { session } = useAuthStore()
   const [projects, setProjects] = useState<Project[]>([])
   const [activeProject, setActiveProjectState] = useState<Project | null>(null)
   const [loading, setLoading] = useState(false)
@@ -67,8 +69,14 @@ export function ProjectStoreProvider({ children }: PropsWithChildren) {
   }, [])
 
   const saveCurrentProject = useCallback(
-    async (updated: Project, userId: string) => {
-      const savedProject = await saveProject(updated, userId)
+    async (updated: Project, userId?: string) => {
+      const resolvedUserId = userId ?? session?.user.id
+
+      if (!resolvedUserId) {
+        throw new Error('No authenticated user available to save project.')
+      }
+
+      const savedProject = await saveProject(updated, resolvedUserId)
 
       setProjects((currentProjects) => {
         const existingIndex = currentProjects.findIndex((project) => project.id === savedProject.id)
@@ -87,12 +95,18 @@ export function ProjectStoreProvider({ children }: PropsWithChildren) {
       setActiveProject(savedProject)
       return savedProject
     },
-    [setActiveProject]
+    [setActiveProject, session?.user.id]
   )
 
   const removeProject = useCallback(
-    async (id: string, userId: string) => {
-      await deleteProjectApi(id, userId)
+    async (id: string, userId?: string) => {
+      const resolvedUserId = userId ?? session?.user.id
+
+      if (!resolvedUserId) {
+        throw new Error('No authenticated user available to delete project.')
+      }
+
+      await deleteProjectApi(id, resolvedUserId)
 
       setProjects((currentProjects) => currentProjects.filter((project) => project.id !== id))
       setActiveProjectState((currentActive) => (currentActive?.id === id ? null : currentActive))
@@ -101,7 +115,7 @@ export function ProjectStoreProvider({ children }: PropsWithChildren) {
         localStorage.removeItem(ACTIVE_PROJECT_KEY)
       }
     },
-    []
+    [session?.user.id]
   )
 
   useEffect(() => {

@@ -4,10 +4,10 @@ export type Project = {
   id: string
   title?: string
   chapters?: Chapter[]
-  characters?: unknown[]
-  plotSections?: unknown[]
-  locations?: unknown[]
-  scenes?: unknown[]
+  characters?: Character[]
+  plotSections?: PlotSection[]
+  locations?: LocationItem[]
+  scenes?: Scene[]
   dailyPromptHistory?: unknown[]
   wordCountGoal?: number
   currentWordCount?: number
@@ -21,6 +21,45 @@ export type Chapter = {
   content?: string
   wordCount?: number
   section?: string
+  [key: string]: unknown
+}
+
+export type Character = {
+  id: string
+  name?: string
+  role?: string
+  age?: string
+  physicalDescription?: string
+  backstory?: string
+  motivations?: string
+  [key: string]: unknown
+}
+
+export type PlotSection = {
+  id: string
+  name?: string
+  type?: string
+  summary?: string
+  targetWords?: number
+  status?: string
+  [key: string]: unknown
+}
+
+export type LocationItem = {
+  id: string
+  name?: string
+  description?: string
+  associatedChapters?: string[]
+  [key: string]: unknown
+}
+
+export type Scene = {
+  id: string
+  title?: string
+  summary?: string
+  charactersInvolved?: string[]
+  location?: string
+  status?: string
   [key: string]: unknown
 }
 
