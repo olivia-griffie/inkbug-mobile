@@ -1,0 +1,308 @@
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import type { Chapter } from '../lib/api'
+import { useAuthStore } from '../store/useAuthStore'
+import { useProjects } from '../store/useProjectStore'
+import { C } from '../styles/tokens'
+
+type SaveState = 'saved' | 'saving'
+
+function countWords(text: string) {
+  return text.split(/\s+/).filter(Boolean).length
+}
+
+function ensureChapter(chapter: Chapter | undefined, index: number): Chapter | null {
+  if (!chapter) return null
+
+  return {
+    ...chapter,
+    title: typeof chapter.title === 'string' ? chapter.title : `Chapter ${index + 1}`,
+    content: typeof chapter.content === 'string' ? chapter.content : '',
+    wordCount:
+      typeof chapter.wordCount === 'number' && Number.isFinite(chapter.wordCount)
+        ? chapter.wordCount
+        : countWords(typeof chapter.content === 'string' ? chapter.content : ''),
+    section: typeof chapter.section === 'string' ? chapter.section : `Section ${index + 1}`,
+  }
+}
+
+export function ChapterEditorPage() {
+  const navigate = useNavigate()
+  const { id, cid } = useParams()
+  const { session } = useAuthStore()
+  const { projects, activeProject, setActiveProject, saveActiveProject } = useProjects()
+  const [fontSize, setFontSize] = useState(16)
+  const [saveState, setSaveState] = useState<SaveState>('saved')
+  const [titleDraft, setTitleDraft] = useState('')
+  const [contentDraft, setContentDraft] = useState('')
+  const [sectionDraft, setSectionDraft] = useState('Draft')
+  const [isEditingTitle, setIsEditingTitle] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
+  const latestSaveToken = useRef(0)
+
+  const project = useMemo(
+    () => projects.find((item) => item.id === id) ?? activeProject,
+    [id, projects, activeProject]
+  )
+
+  useEffect(() => {
+    if (project) {
+      setActiveProject(project)
+    }
+  }, [project, setActiveProject])
+
+  const chapters = Array.isArray(project?.chapters) ? project.chapters : []
+  const chapterIndex = chapters.findIndex((item) => item.id === cid)
+  const chapter = ensureChapter(chapterIndex >= 0 ? chapters[chapterIndex] : undefined, chapterIndex)
+
+  useEffect(() => {
+    if (!chapter) return
+    setTitleDraft(chapter.title ?? '')
+    setContentDraft(chapter.content ?? '')
+    setSectionDraft(chapter.section ?? 'Draft')
+    setIsDirty(false)
+    setSaveState('saved')
+  }, [chapter?.id])
+
+  const wordCount = countWords(contentDraft)
+
+  const buildUpdatedProject = () => {
+    if (!project || !chapter || chapterIndex < 0) return null
+
+    const updatedChapter: Chapter = {
+      ...chapter,
+      title: titleDraft.trim() || `Chapter ${chapterIndex + 1}`,
+      content: contentDraft,
+      section: sectionDraft,
+      wordCount,
+    }
+
+    const nextChapters = chapters.map((item, index) =>
+      index === chapterIndex ? updatedChapter : item
+    )
+
+    const currentWordCount = nextChapters.reduce((sum, item) => {
+      const content = typeof item.content === 'string' ? item.content : ''
+      const count =
+        typeof item.wordCount === 'number' && Number.isFinite(item.wordCount)
+          ? item.wordCount
+          : countWords(content)
+      return sum + count
+    }, 0)
+
+    return {
+      ...project,
+      chapters: nextChapters,
+      currentWordCount,
+    }
+  }
+
+  async function persistChanges() {
+    const userId = session?.user.id
+    const updatedProject = buildUpdatedProject()
+
+    if (!userId || !updatedProject) return
+
+    const token = ++latestSaveToken.current
+    setSaveState('saving')
+
+    await saveActiveProject(updatedProject, userId)
+
+    if (latestSaveToken.current === token) {
+      setIsDirty(false)
+      setSaveState('saved')
+    }
+  }
+
+  useEffect(() => {
+    if (!chapter || !isDirty) return
+
+    setSaveState('saving')
+    const timeout = window.setTimeout(() => {
+      void persistChanges()
+    }, 1500)
+
+    return () => window.clearTimeout(timeout)
+  }, [titleDraft, contentDraft, sectionDraft, isDirty, chapter?.id])
+
+  if (!project || !chapter) {
+    return <div style={{ padding: 16 }}>Chapter not found.</div>
+  }
+
+  async function handleBack() {
+    if (isDirty) {
+      const shouldSave = window.confirm('Save before leaving?')
+      if (!shouldSave) return
+      await persistChanges()
+    }
+
+    navigate(-1)
+  }
+
+  return (
+    <div
+      style={{
+        minHeight: '100dvh',
+        display: 'flex',
+        flexDirection: 'column',
+        background: C.cream,
+      }}
+    >
+      <div
+        style={{
+          padding: '18px 16px 12px',
+          display: 'grid',
+          gridTemplateColumns: 'auto 1fr auto',
+          alignItems: 'center',
+          gap: 12,
+          borderBottom: `1px solid ${C.borderSoft}`,
+          background: C.card,
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => void handleBack()}
+          style={{
+            border: 0,
+            background: 'transparent',
+            color: C.ink,
+            fontSize: '1.2rem',
+          }}
+          aria-label="Go back"
+        >
+          ←
+        </button>
+
+        <div style={{ minWidth: 0 }}>
+          {isEditingTitle ? (
+            <input
+              value={titleDraft}
+              onChange={(event) => {
+                setTitleDraft(event.target.value)
+                setIsDirty(true)
+              }}
+              onBlur={() => setIsEditingTitle(false)}
+              autoFocus
+              style={{
+                width: '100%',
+                border: 0,
+                outline: 'none',
+                background: 'transparent',
+                fontFamily: 'Lora, serif',
+                fontSize: '1.05rem',
+                color: C.ink,
+              }}
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsEditingTitle(true)}
+              style={{
+                padding: 0,
+                border: 0,
+                background: 'transparent',
+                fontFamily: 'Lora, serif',
+                fontSize: '1.05rem',
+                color: C.ink,
+                textAlign: 'left',
+                width: '100%',
+              }}
+            >
+              {titleDraft}
+            </button>
+          )}
+        </div>
+
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ color: C.inkSoft, fontSize: '0.8rem' }}>{wordCount} words</div>
+          <div style={{ color: saveState === 'saving' ? C.coral : C.inkMuted, fontSize: '0.78rem' }}>
+            {saveState === 'saving' ? 'Saving...' : 'Saved'}
+          </div>
+        </div>
+      </div>
+
+      <textarea
+        value={contentDraft}
+        onChange={(event) => {
+          setContentDraft(event.target.value)
+          setIsDirty(true)
+        }}
+        style={{
+          flex: 1,
+          padding: 20,
+          fontSize,
+          lineHeight: 1.7,
+          border: 'none',
+          background: C.cream,
+          resize: 'none',
+          outline: 'none',
+          color: C.ink,
+        }}
+      />
+
+      <div
+        style={{
+          position: 'sticky',
+          bottom: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+          padding: '14px 16px calc(14px + env(safe-area-inset-bottom))',
+          background: C.card,
+          borderTop: `1px solid ${C.borderSoft}`,
+        }}
+      >
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            type="button"
+            onClick={() => setFontSize((size) => Math.max(14, size - 1))}
+            style={{
+              border: `1px solid ${C.border}`,
+              background: C.soft,
+              borderRadius: 10,
+              width: 40,
+              height: 40,
+            }}
+          >
+            -
+          </button>
+          <button
+            type="button"
+            onClick={() => setFontSize((size) => Math.min(24, size + 1))}
+            style={{
+              border: `1px solid ${C.border}`,
+              background: C.soft,
+              borderRadius: 10,
+              width: 40,
+              height: 40,
+            }}
+          >
+            +
+          </button>
+        </div>
+
+        <select
+          value={sectionDraft}
+          onChange={(event) => {
+            setSectionDraft(event.target.value)
+            setIsDirty(true)
+          }}
+          style={{
+            border: `1px solid ${C.border}`,
+            background: C.soft,
+            borderRadius: 10,
+            padding: '10px 12px',
+            color: C.ink,
+          }}
+        >
+          <option value="Draft">Draft</option>
+          <option value="Act I">Act I</option>
+          <option value="Act II">Act II</option>
+          <option value="Act III">Act III</option>
+          <option value="Finale">Finale</option>
+        </select>
+      </div>
+    </div>
+  )
+}
