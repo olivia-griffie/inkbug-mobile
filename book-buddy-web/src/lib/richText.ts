@@ -10,6 +10,24 @@ export type ParsedRichText = {
   settings: RichTextSettings
 }
 
+function decodeHtmlEntities(value = '') {
+  const raw = String(value || '')
+
+  if (typeof document !== 'undefined') {
+    const textarea = document.createElement('textarea')
+    textarea.innerHTML = raw
+    return textarea.value
+  }
+
+  return raw
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+ }
+
 function escapeHtml(value = '') {
   return String(value)
     .replace(/&/g, '&amp;')
@@ -33,13 +51,14 @@ function plainTextToEditorHtml(value = '') {
 
 export function parseRichTextValue(value = ''): ParsedRichText {
   const raw = String(value || '')
+  const decoded = decodeHtmlEntities(raw)
 
   if (typeof document !== 'undefined') {
     const container = document.createElement('div')
-    container.innerHTML = raw
-    const root = container.firstElementChild
+    container.innerHTML = decoded
+    const root = container.querySelector('[data-editor-root="true"]')
 
-    if (root instanceof HTMLElement && root.matches('[data-editor-root="true"]')) {
+    if (root instanceof HTMLElement) {
       return {
         html: root.innerHTML || '<p><br></p>',
         settings: {
@@ -51,7 +70,7 @@ export function parseRichTextValue(value = ''): ParsedRichText {
       }
     }
   } else {
-    const match = raw.match(/^<div[^>]*data-editor-root="true"[^>]*>([\s\S]*)<\/div>$/i)
+    const match = decoded.match(/^<div[^>]*data-editor-root="true"[^>]*>([\s\S]*)<\/div>$/i)
     if (match) {
       return {
         html: match[1] || '<p><br></p>',
@@ -60,15 +79,15 @@ export function parseRichTextValue(value = ''): ParsedRichText {
     }
   }
 
-  if (/<[a-z][\s\S]*>/i.test(raw)) {
+  if (/<[a-z][\s\S]*>/i.test(decoded)) {
     return {
-      html: raw,
+      html: decoded,
       settings: {},
     }
   }
 
   return {
-    html: plainTextToEditorHtml(raw),
+    html: plainTextToEditorHtml(decoded),
     settings: {},
   }
 }
