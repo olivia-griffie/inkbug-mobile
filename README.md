@@ -1,1 +1,1 @@
-# book-buddy-ios
+# book-buddy-mobile
