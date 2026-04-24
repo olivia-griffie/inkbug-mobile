@@ -11,12 +11,12 @@ function NavIcon({
 }) {
   const color = active ? C.coral : C.inkMuted
   const common = {
-    width: 20,
-    height: 20,
+    width: 21,
+    height: 21,
     viewBox: '0 0 24 24',
     fill: 'none',
     stroke: color,
-    strokeWidth: 1.9,
+    strokeWidth: 1.8,
     strokeLinecap: 'round' as const,
     strokeLinejoin: 'round' as const,
   }
@@ -24,9 +24,9 @@ function NavIcon({
   if (kind === 'home') {
     return (
       <svg {...common}>
-        <path d="M4 10.8L12 4l8 6.8" />
-        <path d="M6.5 9.8V19h11V9.8" />
-        <path d="M10 19v-4.5h4V19" />
+        <path d="M5.25 10.3L12 4.75l6.75 5.55" />
+        <path d="M7.15 9.75V19h9.7V9.75" />
+        <path d="M10.1 19v-4.25h3.8V19" />
       </svg>
     )
   }
@@ -34,10 +34,9 @@ function NavIcon({
   if (kind === 'write') {
     return (
       <svg {...common}>
-        <path d="M6.5 5.5h8.5a2 2 0 0 1 2 2v11H8.5a2 2 0 0 0-2 2V5.5Z" />
-        <path d="M8.5 18.5V7.2" />
-        <path d="M10.5 9.5h4.7" />
-        <path d="M10.5 12.5h4.7" />
+        <path d="M12 6.25c-1.55-1.1-3.05-1.65-4.5-1.65H5.8v12.9h1.7c1.55 0 3.05.52 4.5 1.55" />
+        <path d="M12 6.25c1.55-1.1 3.05-1.65 4.5-1.65h1.7v12.9h-1.7c-1.55 0-3.05.52-4.5 1.55" />
+        <path d="M12 6.35V19.05" />
       </svg>
     )
   }
@@ -45,10 +44,10 @@ function NavIcon({
   if (kind === 'community') {
     return (
       <svg {...common}>
-        <path d="M8.2 11a2.6 2.6 0 1 0 0-5.2A2.6 2.6 0 0 0 8.2 11Z" />
-        <path d="M15.8 12.4a2.2 2.2 0 1 0 0-4.4 2.2 2.2 0 0 0 0 4.4Z" />
-        <path d="M4.7 18c.7-2 2.5-3.1 5-3.1 2.4 0 4.2 1.1 4.9 3.1" />
-        <path d="M13.5 18c.4-1.4 1.7-2.2 3.5-2.2 1.3 0 2.3.4 3 .9" />
+        <path d="M9 10.5a2.75 2.75 0 1 0 0-5.5 2.75 2.75 0 0 0 0 5.5Z" />
+        <path d="M16.2 11.6a2.15 2.15 0 1 0 0-4.3 2.15 2.15 0 0 0 0 4.3Z" />
+        <path d="M4.5 18.2c.75-2.15 2.7-3.35 5.45-3.35 2.5 0 4.4 1.06 5.2 2.97" />
+        <path d="M14.35 17.55c.52-1.18 1.73-1.85 3.38-1.85 1.02 0 1.92.27 2.77.82" />
       </svg>
     )
   }
@@ -56,18 +55,16 @@ function NavIcon({
   if (kind === 'prompts') {
     return (
       <svg {...common}>
-        <path d="M12 4.5c-3.6 0-6.5 2.9-6.5 6.5 0 1.8.7 3.3 1.8 4.5.6.7 1 1.4 1.1 2.3h6.2c.1-.9.5-1.6 1.1-2.3 1.1-1.1 1.8-2.7 1.8-4.5 0-3.6-2.9-6.5-6.5-6.5Z" />
-        <path d="M9.6 20h4.8" />
-        <path d="M10.2 17.8h3.6" />
+        <path d="M13.35 3.95L7.65 12.1h3.85l-1.05 7.95 5.9-8.55h-3.9l.9-7.55Z" />
       </svg>
     )
   }
 
   return (
     <svg {...common}>
-      <path d="M5 7.5h14v9.5H8.5L5 20V7.5Z" />
-      <path d="M8.5 11h7" />
-      <path d="M8.5 14h4.5" />
+      <path d="M6 17.35h12" />
+      <path d="M7.25 17.35V10.8a4.75 4.75 0 1 1 9.5 0v6.55" />
+      <path d="M10.15 19.05a1.9 1.9 0 0 0 3.7 0" />
     </svg>
   )
 }
@@ -76,6 +73,7 @@ export function BottomNav() {
   const location = useLocation()
   const { activeProject } = useProjects()
   const activeProjectId = activeProject?.id
+  const unreadCount = 0
 
   const items = [
     { label: 'Home', icon: 'home' as const, to: '/home', active: location.pathname === '/home' },
@@ -117,9 +115,10 @@ export function BottomNav() {
         maxWidth: 430,
         display: 'grid',
         gridTemplateColumns: 'repeat(5, 1fr)',
-        background: C.soft,
+        background: '#fffdfb',
         borderTop: `1px solid ${C.borderSoft}`,
-        padding: '10px 8px 10px',
+        boxShadow: '0 -4px 18px rgba(47,53,69,0.04)',
+        padding: '7px 8px 8px',
       }}
     >
       {items.map((item) => (
@@ -129,15 +128,37 @@ export function BottomNav() {
           style={{
             display: 'grid',
             justifyItems: 'center',
-            gap: 4,
+            gap: 3,
             color: item.active ? C.coral : C.inkMuted,
-            fontSize: '0.68rem',
+            fontSize: '0.66rem',
             fontWeight: 600,
-            padding: '4px 0',
-            letterSpacing: '0.02em',
+            padding: '2px 0 1px',
+            letterSpacing: '0.01em',
+            position: 'relative',
           }}
         >
           <NavIcon kind={item.icon} active={item.active} />
+          {item.label === 'Inbox' && unreadCount > 0 ? (
+            <span
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 'calc(50% + 3px)',
+                minWidth: 15,
+                height: 15,
+                padding: '0 4px',
+                borderRadius: 999,
+                background: C.coral,
+                color: '#fff',
+                fontSize: '0.58rem',
+                fontWeight: 700,
+                lineHeight: '15px',
+                textAlign: 'center',
+              }}
+            >
+              {unreadCount}
+            </span>
+          ) : null}
           <span>{item.label}</span>
         </Link>
       ))}
