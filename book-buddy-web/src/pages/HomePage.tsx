@@ -2,10 +2,27 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BottomNav } from '../components/BottomNav'
 import { ProjectCard } from '../components/ProjectCard'
-import { Spinner } from '../components/Spinner'
 import { useAuthStore } from '../store/useAuthStore'
 import { useProjects } from '../store/useProjectStore'
 import { C } from '../styles/tokens'
+
+function MenuIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      fill="none"
+      stroke={C.inkSoft}
+      strokeWidth="2"
+      strokeLinecap="round"
+    >
+      <line x1="4" y1="6.5" x2="20" y2="6.5" />
+      <line x1="4" y1="12" x2="20" y2="12" />
+      <line x1="4" y1="17.5" x2="20" y2="17.5" />
+    </svg>
+  )
+}
 
 export function HomePage() {
   const navigate = useNavigate()
@@ -27,8 +44,22 @@ export function HomePage() {
   const promptsHref = activeProject ? `/project/${activeProject.id}/prompts` : '/home'
 
   return (
-    <div style={{ minHeight: '100dvh', padding: '24px 16px 80px', position: 'relative' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+    <div
+      style={{
+        minHeight: '100dvh',
+        padding: '18px 20px 88px',
+        position: 'relative',
+        background: 'linear-gradient(180deg, #fff6f4 0%, #fff7f3 32%, #fff7f3 100%)',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          paddingTop: 4,
+        }}
+      >
         <div>
           <div
             style={{
@@ -36,7 +67,7 @@ export function HomePage() {
               textTransform: 'uppercase',
               letterSpacing: '0.1em',
               color: C.inkMuted,
-              marginBottom: 10,
+              marginBottom: 4,
             }}
           >
             Projects
@@ -47,6 +78,7 @@ export function HomePage() {
               fontSize: '1.6rem',
               color: C.ink,
               fontWeight: 400,
+              lineHeight: 1.16,
             }}
           >
             Your Writing Desk
@@ -59,15 +91,16 @@ export function HomePage() {
           style={{
             border: `1px solid ${C.borderSoft}`,
             background: C.card,
-            borderRadius: 12,
+            borderRadius: 14,
             width: 42,
             height: 42,
-            color: C.ink,
-            fontSize: '1.1rem',
+            display: 'grid',
+            placeItems: 'center',
+            boxShadow: '0 6px 14px rgba(47,53,69,0.05)',
           }}
           aria-label="Open menu"
         >
-          ☰
+          <MenuIcon />
         </button>
       </div>
 
@@ -77,30 +110,48 @@ export function HomePage() {
           border: `1px solid ${C.borderSoft}`,
           borderRadius: 14,
           padding: '12px 16px',
-          marginTop: 20,
+          marginTop: 18,
           marginBottom: 22,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: 12,
+          boxShadow: '0 4px 12px rgba(47,53,69,0.06)',
         }}
       >
-        <div>
-          <div style={{ marginBottom: 6, color: C.inkSoft, fontSize: '0.9rem' }}>
-            🔥 Writing Streak
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ fontSize: '1.3rem', lineHeight: 1 }}>🔥</div>
+          <div>
+            <div
+              style={{
+                marginBottom: 2,
+                color: C.inkMuted,
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+              }}
+            >
+              Writing Streak
+            </div>
+            <div style={{ color: C.ink, fontWeight: 600, fontSize: '1rem' }}>
+              {streakCount} days in a row
+            </div>
           </div>
-          <div style={{ color: C.ink, fontWeight: 600 }}>{streakCount} days in a row</div>
         </div>
         <button
           type="button"
           onClick={() => navigate(promptsHref)}
           style={{
             border: 0,
-            borderRadius: 10,
-            padding: '10px 14px',
+            borderRadius: 8,
+            padding: '9px 14px',
             background: C.ink,
             color: C.cream,
             fontWeight: 600,
+            fontSize: '0.75rem',
+            letterSpacing: '0.04em',
+            textTransform: 'uppercase',
           }}
         >
           Prompts
@@ -111,11 +162,23 @@ export function HomePage() {
         style={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 14,
+          alignItems: 'flex-start',
+          marginBottom: 12,
         }}
       >
-        <div style={{ color: C.ink, fontWeight: 600 }}>Your Projects</div>
+        <div
+          style={{
+            color: C.inkSoft,
+            fontWeight: 700,
+            fontSize: '0.72rem',
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            lineHeight: 1.1,
+            maxWidth: 90,
+          }}
+        >
+          Your Projects
+        </div>
         <button
           type="button"
           onClick={() => navigate('/home/create')}
@@ -124,15 +187,31 @@ export function HomePage() {
             background: 'transparent',
             color: C.coral,
             fontWeight: 600,
-            fontSize: '0.95rem',
+            fontSize: '0.75rem',
+            lineHeight: 1.1,
           }}
         >
-          + New
+          +<br />
+          New
         </button>
       </div>
 
       <main style={{ display: 'grid', gap: 14 }}>
-        {loading ? <Spinner /> : null}
+        {loading
+          ? Array.from({ length: 3 }).map((_, index) => (
+              <div
+                key={index}
+                style={{
+                  height: 180,
+                  borderRadius: 16,
+                  background: 'linear-gradient(180deg, #f6eee7 0%, #ffffff 100%)',
+                  border: `1px solid ${C.borderSoft}`,
+                  animation: 'shimmer 1.2s ease-in-out infinite alternate',
+                  boxShadow: '0 6px 16px rgba(47,53,69,0.05)',
+                }}
+              />
+            ))
+          : null}
         {!loading && !projects.length ? (
           <div
             style={{
@@ -147,9 +226,10 @@ export function HomePage() {
           </div>
         ) : null}
 
-        {projects.map((project) => (
-          <ProjectCard key={project.id} project={project} />
-        ))}
+        {!loading &&
+          projects.map((project) => (
+            <ProjectCard key={project.id} project={project} />
+          ))}
       </main>
 
       {drawerOpen ? (

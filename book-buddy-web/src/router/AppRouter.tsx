@@ -4,6 +4,7 @@ import { ChapterEditorPage } from '../pages/ChapterEditorPage'
 import { ChaptersPage } from '../pages/ChaptersPage'
 import { CharactersPage } from '../pages/CharactersPage'
 import { CommunityPage } from '../pages/CommunityPage'
+import { ConversationPage } from '../pages/ConversationPage'
 import { HomePage } from '../pages/HomePage'
 import { InboxPage } from '../pages/InboxPage'
 import { LocationsPage } from '../pages/LocationsPage'
@@ -38,6 +39,7 @@ export function AppRouter() {
         <Route path="/project/:id/prompts" element={<PromptsPage />} />
         <Route path="/community" element={<CommunityPage />} />
         <Route path="/inbox" element={<InboxPage />} />
+        <Route path="/inbox/:conversationId" element={<ConversationPage />} />
         <Route path="/account" element={<AccountPage />} />
       </Route>
     </Routes>

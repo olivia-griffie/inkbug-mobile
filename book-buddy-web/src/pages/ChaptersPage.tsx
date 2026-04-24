@@ -1,7 +1,8 @@
 import { useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import type { Chapter } from '../lib/api'
 import { BottomNav } from '../components/BottomNav'
+import { TopBar } from '../components/TopBar'
+import type { Chapter } from '../lib/api'
 import { useAuthStore } from '../store/useAuthStore'
 import { useProjects } from '../store/useProjectStore'
 import { C } from '../styles/tokens'
@@ -40,7 +41,7 @@ export function ChaptersPage() {
 
   async function handleAddChapter() {
     const userId = session?.user.id
-    if (!userId || !project) return
+    if (!userId) return
 
     const newChapter: Chapter = {
       id: crypto.randomUUID(),
@@ -61,19 +62,17 @@ export function ChaptersPage() {
   }
 
   return (
-    <div style={{ minHeight: '100dvh', padding: '24px 16px 96px' }}>
-      <div
-        style={{
-          fontFamily: 'Lora, serif',
-          fontSize: '1.5rem',
-          color: C.ink,
-          marginBottom: 16,
-        }}
-      >
-        Chapters
-      </div>
+    <div style={{ minHeight: '100dvh', paddingBottom: 96, background: C.cream }}>
+      <TopBar
+        title="Chapters"
+        left={
+          <button type="button" onClick={() => navigate(-1)} style={{ border: 0, background: 'transparent', color: C.ink }}>
+            Back
+          </button>
+        }
+      />
 
-      <div style={{ display: 'grid', gap: 12 }}>
+      <div style={{ display: 'grid', gap: 12, padding: '20px 16px 0' }}>
         {chapters.map((chapter, index) => (
           <button
             key={chapter.id}
@@ -104,8 +103,8 @@ export function ChaptersPage() {
         type="button"
         onClick={() => void handleAddChapter()}
         style={{
-          width: '100%',
-          marginTop: 18,
+          width: 'calc(100% - 32px)',
+          margin: '18px 16px 0',
           border: 0,
           borderRadius: 12,
           background: C.ink,

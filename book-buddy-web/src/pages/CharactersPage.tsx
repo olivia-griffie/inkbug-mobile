@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { BottomNav } from '../components/BottomNav'
+import { TopBar } from '../components/TopBar'
 import type { Character } from '../lib/api'
 import { useProjects } from '../store/useProjectStore'
 import { C } from '../styles/tokens'
@@ -43,8 +44,7 @@ export function CharactersPage() {
 
   if (!project) return <div style={{ padding: 16 }}>Project not found.</div>
 
-  const currentProject = project
-  const characters = Array.isArray(currentProject.characters) ? currentProject.characters : []
+  const characters = Array.isArray(project.characters) ? project.characters : []
 
   function openForNew() {
     setEditingId(null)
@@ -80,7 +80,7 @@ export function CharactersPage() {
       : [...characters, form]
 
     await saveActiveProject({
-      ...currentProject,
+      ...project,
       characters: nextCharacters,
     })
 
@@ -88,21 +88,13 @@ export function CharactersPage() {
   }
 
   return (
-    <div style={{ minHeight: '100dvh', background: C.cream, padding: '20px 16px 96px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          style={{ border: 0, background: 'transparent', fontSize: '1.2rem', color: C.ink }}
-        >
-          ←
-        </button>
-        <div style={{ fontFamily: 'Lora, serif', fontSize: '1.45rem', color: C.ink }}>
-          Characters
-        </div>
-      </div>
+    <div style={{ minHeight: '100dvh', background: C.cream, paddingBottom: '96px' }}>
+      <TopBar
+        title="Characters"
+        left={<button type="button" onClick={() => navigate(-1)} style={{ border: 0, background: 'transparent', color: C.ink }}>Back</button>}
+      />
 
-      <div style={{ display: 'grid', gap: 12 }}>
+      <div style={{ display: 'grid', gap: 12, padding: '20px 16px 0' }}>
         {characters.map((character) => (
           <button
             key={character.id}
@@ -128,48 +120,11 @@ export function CharactersPage() {
         ))}
       </div>
 
-      <button
-        type="button"
-        onClick={openForNew}
-        style={{
-          position: 'fixed',
-          right: 'max(calc((100vw - 430px) / 2 + 16px), 16px)',
-          bottom: '92px',
-          width: 56,
-          height: 56,
-          borderRadius: '50%',
-          border: 0,
-          background: C.ink,
-          color: 'white',
-          fontSize: '1.7rem',
-          boxShadow: '0 10px 24px rgba(47,53,69,0.2)',
-        }}
-      >
-        +
-      </button>
+      <button type="button" onClick={openForNew} style={fabStyle}>+</button>
 
       {open ? (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(47,53,69,0.22)',
-            display: 'flex',
-            alignItems: 'flex-end',
-          }}
-        >
-          <div
-            style={{
-              width: '100%',
-              maxWidth: 430,
-              margin: '0 auto',
-              background: 'white',
-              borderRadius: '20px 20px 0 0',
-              padding: 24,
-              maxHeight: '90dvh',
-              overflowY: 'auto',
-            }}
-          >
+        <div style={overlayStyle}>
+          <div style={sheetStyle}>
             <div style={{ display: 'grid', gap: 14 }}>
               <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Name" style={fieldStyle} />
               <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} style={fieldStyle}>
@@ -221,4 +176,37 @@ const cancelButtonStyle = {
   background: 'transparent',
   color: C.inkMuted,
   padding: 6,
+}
+
+const fabStyle = {
+  position: 'fixed' as const,
+  right: 'max(calc((100vw - 430px) / 2 + 16px), 16px)',
+  bottom: '92px',
+  width: 56,
+  height: 56,
+  borderRadius: '50%',
+  border: 0,
+  background: C.ink,
+  color: 'white',
+  fontSize: '1.7rem',
+  boxShadow: '0 10px 24px rgba(47,53,69,0.2)',
+}
+
+const overlayStyle = {
+  position: 'fixed' as const,
+  inset: 0,
+  background: 'rgba(47,53,69,0.22)',
+  display: 'flex',
+  alignItems: 'flex-end',
+}
+
+const sheetStyle = {
+  width: '100%',
+  maxWidth: 430,
+  margin: '0 auto',
+  background: 'white',
+  borderRadius: '20px 20px 0 0',
+  padding: 24,
+  maxHeight: '90dvh',
+  overflowY: 'auto' as const,
 }

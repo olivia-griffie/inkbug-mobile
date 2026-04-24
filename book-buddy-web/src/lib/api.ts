@@ -8,7 +8,7 @@ export type Project = {
   plotSections?: PlotSection[]
   locations?: LocationItem[]
   scenes?: Scene[]
-  dailyPromptHistory?: unknown[]
+  dailyPromptHistory?: DailyPromptHistoryEntry[]
   wordCountGoal?: number
   currentWordCount?: number
   updatedAt?: string
@@ -63,11 +63,21 @@ export type Scene = {
   [key: string]: unknown
 }
 
+export type DailyPromptHistoryEntry = {
+  date: string
+  prompt: string
+  answer: string
+  wordCount: number
+  answeredAt: string
+  [key: string]: unknown
+}
+
 export type Profile = {
   id: string
   username?: string | null
   display_name?: string | null
   streak_count?: number | null
+  tier?: string | null
   [key: string]: unknown
 }
 
