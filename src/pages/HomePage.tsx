@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { AppFrame, EmptyState, ListCard, StatChip } from '../components/AppFrame';
 import { useProjects } from '../hooks/useProjects';
 import { summarizeWordCount } from '../lib/projectData';
+import { excerptText } from '../lib/richText';
 import { C } from '../styles/tokens';
 
 export function HomePage() {
@@ -13,7 +14,11 @@ export function HomePage() {
       <div style={{ display: 'flex', gap: 10, marginBottom: 18 }}>
         <StatChip label="Projects" value={projects.length} />
         <StatChip label="Words" value={wordCount.toLocaleString()} tone="mint" />
-        <StatChip label="Chapters" value={projects.reduce((sum, item) => sum + item.chapters.length, 0)} tone="pink" />
+        <StatChip
+          label="Chapters"
+          value={projects.reduce((sum, item) => sum + item.chapters.length, 0)}
+          tone="pink"
+        />
       </div>
 
       <div
@@ -49,12 +54,15 @@ export function HomePage() {
           href={`/project/${project.id}`}
           title={project.title}
           subtitle={`${project.genre} • ${project.chapters.length} chapters`}
-          body={project.description}
+          body={excerptText(project.description, 'Your synced writing workspace on the go.', 160)}
         />
       ))}
 
       <div style={{ padding: '8px 4px 0', color: C.inkMuted, fontSize: 13 }}>
-        Looking for your social feed? <Link to="/community" style={{ color: C.coral }}>Open community</Link>
+        Looking for your social feed?{' '}
+        <Link to="/community" style={{ color: C.coral }}>
+          Open community
+        </Link>
       </div>
     </AppFrame>
   );
