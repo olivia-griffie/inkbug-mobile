@@ -44,7 +44,7 @@ export function HomePage() {
       {!loading && !projects.length ? (
         <EmptyState
           title="No projects yet"
-          description="Once your Book Buddy projects are saved to the cloud, they'll show up here automatically."
+          description="Once your Inkbug projects are saved to the cloud, they'll show up here automatically."
         />
       ) : null}
 

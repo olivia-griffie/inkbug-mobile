@@ -20,7 +20,7 @@ function RootRedirect() {
   const { session, loading } = useAuth();
 
   if (loading) {
-    return <div style={{ padding: 24 }}>Loading Book Buddy...</div>;
+    return <div style={{ padding: 24 }}>Loading Inkbug Beta...</div>;
   }
 
   return <Navigate to={session ? '/home' : '/login'} replace />;

@@ -51,7 +51,7 @@ export function AccountPage() {
         }}
       >
         <div style={{ color: C.ink, fontWeight: 600, marginBottom: 8 }}>
-          {profile?.display_name || profile?.username || 'Book Buddy writer'}
+          {profile?.display_name || profile?.username || 'Inkbug writer'}
         </div>
         <div style={{ color: C.inkSoft, marginBottom: 12 }}>{session?.user.email || 'No email found'}</div>
         <span

@@ -74,7 +74,7 @@ export function LoginPage() {
               color: C.ink,
             }}
           >
-            Book Buddy
+            Inkbug Beta
           </div>
         </div>
 

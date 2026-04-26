@@ -19,7 +19,7 @@ export function AccountPage() {
       <div style={{ ...cardStyle, padding: 20, marginBottom: 18 }}>
         <div style={{ color: C.inkMuted, fontSize: 13, marginBottom: 8 }}>Signed in as</div>
         <div style={{ fontFamily: 'Lora, serif', fontSize: 28, marginBottom: 8 }}>
-          {profile?.display_name || profile?.username || 'Book Buddy writer'}
+          {profile?.display_name || profile?.username || 'Inkbug writer'}
         </div>
         <div style={{ color: C.inkSoft }}>{session?.user.email}</div>
       </div>

@@ -103,7 +103,7 @@ export function AppFrame({
                 marginBottom: 8,
               }}
             >
-              {eyebrow ?? 'Book Buddy'}
+              {eyebrow ?? 'Inkbug Beta'}
             </div>
             <h1
               style={{

@@ -61,7 +61,7 @@ export function CommunityPage() {
   return (
     <AppFrame title="Community" eyebrow="Discover writers">
       <div style={{ color: C.inkSoft, lineHeight: 1.6, marginBottom: 18 }}>
-        Browse shared projects and published chapters from the wider Book Buddy community.
+        Browse shared projects and published chapters from the wider Inkbug community.
       </div>
 
       {loading ? <p>Loading community feed...</p> : null}

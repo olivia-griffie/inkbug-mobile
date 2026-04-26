@@ -53,7 +53,7 @@ export function RegisterPage() {
             Start writing on mobile.
           </h1>
           <p style={{ margin: '0 0 24px', lineHeight: 1.6, color: C.inkSoft }}>
-            Create an account and your projects will stay synced with Book Buddy across devices.
+            Create an account and your projects will stay synced with Inkbug across devices.
           </p>
 
           <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 14 }}>

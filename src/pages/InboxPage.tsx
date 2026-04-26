@@ -81,7 +81,7 @@ export function InboxPage() {
           <ListCard
             key={conversation.id}
             title={conversation.title || 'Untitled conversation'}
-            body="Open Book Buddy on desktop to reply and manage threads."
+            body="Open Inkbug Beta on desktop to reply and manage threads."
           />
         ))}
       </div>

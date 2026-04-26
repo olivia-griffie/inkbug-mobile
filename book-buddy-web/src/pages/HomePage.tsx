@@ -268,7 +268,7 @@ export function HomePage() {
                 marginBottom: 16,
               }}
             >
-              Book Buddy
+              Inkbug Beta
             </div>
             <div style={{ display: 'grid', gap: 12, color: C.inkSoft }}>
               <button

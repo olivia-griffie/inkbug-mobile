@@ -54,13 +54,13 @@ export function LoginPage() {
               marginBottom: 16,
             }}
           >
-            Book Buddy Mobile
+            Inkbug Beta Mobile
           </div>
           <h1 style={{ margin: '0 0 12px', fontFamily: 'Lora, serif', fontSize: 34 }}>
             Your story, exactly where you left it.
           </h1>
           <p style={{ margin: '0 0 24px', lineHeight: 1.6, color: C.inkSoft }}>
-            Sign in with the same email and password you already use in Book Buddy.
+            Sign in with the same email and password you already use in Inkbug.
           </p>
 
           <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 14 }}>

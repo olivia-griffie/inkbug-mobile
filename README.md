@@ -1,6 +1,6 @@
-# Book Buddy Mobile
+# Inkbug Beta Mobile
 
-Mobile-optimized React web companion for the existing Book Buddy Supabase backend.
+Mobile-optimized React web companion for the existing Inkbug Supabase backend.
 
 ## Run locally
 
