@@ -23,18 +23,64 @@ export function HomePage() {
 
       <div
         style={{
-          padding: 18,
-          borderRadius: 24,
-          background: `linear-gradient(135deg, rgba(255,106,90,0.14) 0%, rgba(255,138,61,0.08) 100%)`,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 12,
           marginBottom: 18,
         }}
       >
-        <div style={{ color: C.inkMuted, fontSize: 13, marginBottom: 8 }}>Jump back in</div>
-        <div style={{ fontFamily: 'Lora, serif', fontSize: 26, marginBottom: 8 }}>
-          Pick up your latest chapter from anywhere.
+        <div
+          style={{
+            padding: 18,
+            borderRadius: 24,
+            background: `linear-gradient(135deg, rgba(255,106,90,0.14) 0%, rgba(255,138,61,0.08) 100%)`,
+            flex: 1,
+          }}
+        >
+          <div style={{ color: C.inkMuted, fontSize: 13, marginBottom: 8 }}>Jump back in</div>
+          <div style={{ fontFamily: 'Lora, serif', fontSize: 26, marginBottom: 8 }}>
+            Pick up your latest chapter from anywhere.
+          </div>
+          <div style={{ color: C.inkSoft, lineHeight: 1.6 }}>
+            Everything below comes straight from your cloud workspace, not a separate mobile copy.
+          </div>
         </div>
+
+        <Link
+          to="/home/create"
+          style={{
+            alignSelf: 'stretch',
+            minWidth: 112,
+            display: 'grid',
+            placeItems: 'center',
+            padding: '18px 14px',
+            borderRadius: 24,
+            border: `1px solid ${C.border}`,
+            background: 'white',
+            fontWeight: 700,
+            color: C.ink,
+            textAlign: 'center',
+          }}
+        >
+          New
+          <br />
+          Project
+        </Link>
+      </div>
+
+      <div
+        style={{
+          padding: 18,
+          borderRadius: 24,
+          background: 'rgba(255,255,255,0.72)',
+          border: `1px solid ${C.borderSoft}`,
+          marginBottom: 18,
+        }}
+      >
+        <div style={{ color: C.inkMuted, fontSize: 13, marginBottom: 8 }}>Create and plan</div>
         <div style={{ color: C.inkSoft, lineHeight: 1.6 }}>
-          Everything below comes straight from your cloud workspace, not a separate mobile copy.
+          Mobile can now start a fresh Inkbug project with genres, tags, goals, cover art, and visibility baked in from the beginning.
         </div>
       </div>
 

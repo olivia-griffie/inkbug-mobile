@@ -6,6 +6,7 @@ import { ChapterEditorPage } from './pages/ChapterEditorPage';
 import { ChaptersPage } from './pages/ChaptersPage';
 import { CharactersPage } from './pages/CharactersPage';
 import { CommunityPage } from './pages/CommunityPage';
+import { CreateProjectPage } from './pages/CreateProjectPage';
 import { HomePage } from './pages/HomePage';
 import { InboxPage } from './pages/InboxPage';
 import { LocationsPage } from './pages/LocationsPage';
@@ -38,6 +39,7 @@ export function App() {
 
       <Route element={<ProtectedRoute />}>
         <Route path="/home" element={<HomePage />} />
+        <Route path="/home/create" element={<CreateProjectPage />} />
         <Route path="/project/:id" element={<ProjectDashboardPage />} />
         <Route path="/project/:id/chapters" element={<ChaptersPage />} />
         <Route path="/project/:id/chapters/:cid" element={<ChapterEditorPage />} />
