@@ -125,7 +125,7 @@ export function ChapterEditorPage() {
               >
                 {busy
                   ? isPublished ? 'Unpublishing...' : 'Publishing...'
-                  : isPublished ? 'Unpublish' : 'Publish Chapter'}
+                  : isPublished ? 'Unpublish Chapter' : 'Publish Chapter'}
               </button>
             </div>
 
