@@ -8,7 +8,7 @@ import { C } from '../styles/tokens';
 import { useAuth } from '../state/AuthContext';
 import { Character } from '../types/bookBuddy';
 
-const roles = [
+const characterTypes = [
   'Protagonist',
   'Antagonist',
   'Love Interest',
@@ -33,6 +33,39 @@ const areaStyle = {
   resize: 'vertical' as const,
 };
 
+function blankCharacter(): Character {
+  return {
+    id: crypto.randomUUID(),
+    name: '',
+    appearance: '',
+    background: '',
+    secrets: '',
+    desires: '',
+    other: '',
+    typeTags: [],
+  };
+}
+
+function characterExcerpt(c: Character) {
+  return (
+    c.background ||
+    c.appearance ||
+    c.desires ||
+    c.secrets ||
+    c.other ||
+    c.backstory ||
+    c.physicalDescription ||
+    c.motivations ||
+    ''
+  );
+}
+
+function resolveTypeTags(c: Character): string[] {
+  if (c.typeTags && c.typeTags.length > 0) return c.typeTags;
+  if (c.role) return [c.role];
+  return [];
+}
+
 export function CharactersPage() {
   const { id } = useParams();
   const { session } = useAuth();
@@ -41,30 +74,14 @@ export function CharactersPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState('');
-  const [form, setForm] = useState<Character>({
-    id: '',
-    name: '',
-    role: 'Supporting',
-    age: '',
-    physicalDescription: '',
-    backstory: '',
-    motivations: '',
-  });
+  const [form, setForm] = useState<Character>(blankCharacter());
 
   const characters = useMemo(() => project?.characters ?? [], [project]);
 
   function openForNew() {
     setEditingId(null);
     setStatus('');
-    setForm({
-      id: crypto.randomUUID(),
-      name: '',
-      role: 'Supporting',
-      age: '',
-      physicalDescription: '',
-      backstory: '',
-      motivations: '',
-    });
+    setForm(blankCharacter());
     setOpen(true);
   }
 
@@ -72,21 +89,25 @@ export function CharactersPage() {
     setEditingId(character.id);
     setStatus('');
     setForm({
-      id: character.id,
-      name: character.name ?? '',
-      role: character.role ?? 'Supporting',
-      age: character.age ?? '',
-      physicalDescription: character.physicalDescription ?? '',
-      backstory: character.backstory ?? '',
-      motivations: character.motivations ?? '',
+      ...blankCharacter(),
+      ...character,
+      typeTags: resolveTypeTags(character),
     });
     setOpen(true);
   }
 
+  function toggleType(type: string) {
+    const current = form.typeTags ?? [];
+    setForm({
+      ...form,
+      typeTags: current.includes(type)
+        ? current.filter((t) => t !== type)
+        : [...current, type],
+    });
+  }
+
   async function handleSave() {
-    if (!project || !session?.user.id) {
-      return;
-    }
+    if (!project || !session?.user.id) return;
 
     setSaving(true);
     setStatus('');
@@ -96,10 +117,7 @@ export function CharactersPage() {
         : [...characters, form];
 
       await saveNormalizedProject(
-        {
-          ...project,
-          characters: nextCharacters,
-        },
+        { ...project, characters: nextCharacters },
         session.user.id,
       );
       await reload();
@@ -111,9 +129,37 @@ export function CharactersPage() {
     }
   }
 
+  async function handleDelete() {
+    if (!project || !session?.user.id || !editingId) return;
+
+    setSaving(true);
+    setStatus('');
+    try {
+      await saveNormalizedProject(
+        { ...project, characters: characters.filter((c) => c.id !== editingId) },
+        session.user.id,
+      );
+      await reload();
+      setOpen(false);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Could not delete character.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <ProjectGate title="Characters">
-      <div style={{ display: 'grid', gap: 12 }}>
+      <button type="button" onClick={openForNew} style={addButtonStyle}>
+        + Add character
+      </button>
+
+      <div style={{ display: 'grid', gap: 12, marginTop: 14 }}>
+        {!characters.length ? (
+          <div style={{ color: C.inkMuted, fontSize: 14, padding: '12px 4px' }}>
+            No characters yet. Add one above.
+          </div>
+        ) : null}
         {characters.map((character) => (
           <button
             key={character.id}
@@ -121,65 +167,125 @@ export function CharactersPage() {
             onClick={() => openForEdit(character)}
             style={cardButtonStyle}
           >
-            <div style={{ color: C.ink, fontWeight: 600, marginBottom: 6 }}>
+            <div style={{ color: C.ink, fontWeight: 600, marginBottom: 4 }}>
               {character.name || 'Untitled character'}
             </div>
-            <div style={{ color: C.inkSoft, lineHeight: 1.5 }}>
-              {excerptText(
-                character.motivations || character.backstory || character.physicalDescription || '',
-                'Tap to add details.',
-                180,
-              )}
+            {resolveTypeTags(character).length > 0 ? (
+              <div style={{ color: C.coral, fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
+                {resolveTypeTags(character).join(', ')}
+              </div>
+            ) : null}
+            <div style={{ color: C.inkSoft, lineHeight: 1.5, fontSize: 14 }}>
+              {excerptText(characterExcerpt(character), 'Tap to add details.', 180)}
             </div>
           </button>
         ))}
       </div>
 
-      <button type="button" onClick={openForNew} style={fabStyle}>+</button>
-
       {open ? (
         <div style={overlayStyle}>
           <div style={sheetStyle}>
             <div style={{ display: 'grid', gap: 14 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ fontWeight: 700, fontSize: 16 }}>
+                  {editingId ? 'Edit character' : 'New character'}
+                </div>
+                {editingId ? (
+                  <button
+                    type="button"
+                    onClick={() => void handleDelete()}
+                    disabled={saving}
+                    style={{ border: 0, background: 'transparent', color: C.coral, fontWeight: 700, fontSize: 13 }}
+                  >
+                    Delete
+                  </button>
+                ) : null}
+              </div>
+
               <input
                 value={form.name}
-                onChange={(event) => setForm({ ...form, name: event.target.value })}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder="Name"
                 style={fieldStyle}
               />
-              <select
-                value={form.role}
-                onChange={(event) => setForm({ ...form, role: event.target.value })}
-                style={fieldStyle}
-              >
-                {roles.map((role) => (
-                  <option key={role} value={role}>{role}</option>
-                ))}
-              </select>
-              <input
-                value={form.age}
-                onChange={(event) => setForm({ ...form, age: event.target.value })}
-                placeholder="Age"
-                style={fieldStyle}
-              />
-              <textarea
-                value={form.physicalDescription}
-                onChange={(event) => setForm({ ...form, physicalDescription: event.target.value })}
-                placeholder="Physical description"
-                style={areaStyle}
-              />
-              <textarea
-                value={form.backstory}
-                onChange={(event) => setForm({ ...form, backstory: event.target.value })}
-                placeholder="Backstory"
-                style={areaStyle}
-              />
-              <textarea
-                value={form.motivations}
-                onChange={(event) => setForm({ ...form, motivations: event.target.value })}
-                placeholder="Motivations"
-                style={areaStyle}
-              />
+
+              <div>
+                <div style={{ color: C.inkMuted, fontSize: 12, marginBottom: 8 }}>Character type</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {characterTypes.map((type) => {
+                    const active = (form.typeTags ?? []).includes(type);
+                    return (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => toggleType(type)}
+                        style={{
+                          border: `1px solid ${active ? C.coral : C.border}`,
+                          borderRadius: 999,
+                          padding: '8px 12px',
+                          background: active ? 'rgba(255,106,90,0.12)' : 'white',
+                          color: active ? C.coral : C.inkSoft,
+                          fontWeight: 700,
+                          fontSize: 13,
+                        }}
+                      >
+                        {type}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <div style={{ color: C.inkMuted, fontSize: 12, marginBottom: 6 }}>Appearance</div>
+                <textarea
+                  value={form.appearance ?? ''}
+                  onChange={(e) => setForm({ ...form, appearance: e.target.value })}
+                  placeholder="Physical appearance"
+                  style={areaStyle}
+                />
+              </div>
+
+              <div>
+                <div style={{ color: C.inkMuted, fontSize: 12, marginBottom: 6 }}>Background</div>
+                <textarea
+                  value={form.background ?? ''}
+                  onChange={(e) => setForm({ ...form, background: e.target.value })}
+                  placeholder="Backstory and history"
+                  style={areaStyle}
+                />
+              </div>
+
+              <div>
+                <div style={{ color: C.inkMuted, fontSize: 12, marginBottom: 6 }}>Secrets</div>
+                <textarea
+                  value={form.secrets ?? ''}
+                  onChange={(e) => setForm({ ...form, secrets: e.target.value })}
+                  placeholder="What are they hiding?"
+                  style={areaStyle}
+                />
+              </div>
+
+              <div>
+                <div style={{ color: C.inkMuted, fontSize: 12, marginBottom: 6 }}>Desires</div>
+                <textarea
+                  value={form.desires ?? ''}
+                  onChange={(e) => setForm({ ...form, desires: e.target.value })}
+                  placeholder="What do they want?"
+                  style={areaStyle}
+                />
+              </div>
+
+              <div>
+                <div style={{ color: C.inkMuted, fontSize: 12, marginBottom: 6 }}>Other notes</div>
+                <textarea
+                  value={form.other ?? ''}
+                  onChange={(e) => setForm({ ...form, other: e.target.value })}
+                  placeholder="Anything else"
+                  style={areaStyle}
+                />
+              </div>
+
               <button type="button" onClick={() => void handleSave()} disabled={saving} style={saveButtonStyle}>
                 {saving ? 'Saving...' : 'Save'}
               </button>
@@ -193,6 +299,17 @@ export function CharactersPage() {
   );
 }
 
+const addButtonStyle = {
+  width: '100%',
+  border: `1px solid ${C.border}`,
+  borderRadius: 12,
+  padding: '14px 18px',
+  background: 'white',
+  color: C.ink,
+  fontWeight: 700,
+  textAlign: 'left' as const,
+};
+
 const cardButtonStyle = {
   width: '100%',
   textAlign: 'left' as const,
@@ -201,20 +318,6 @@ const cardButtonStyle = {
   borderRadius: 12,
   padding: 16,
   boxShadow: '0 6px 16px rgba(47,53,69,0.07)',
-};
-
-const fabStyle = {
-  position: 'fixed' as const,
-  right: 'max(calc((100vw - 520px) / 2 + 16px), 16px)',
-  bottom: '24px',
-  width: 56,
-  height: 56,
-  borderRadius: '50%',
-  border: 0,
-  background: C.ink,
-  color: 'white',
-  fontSize: '1.7rem',
-  boxShadow: '0 10px 24px rgba(47,53,69,0.2)',
 };
 
 const overlayStyle = {

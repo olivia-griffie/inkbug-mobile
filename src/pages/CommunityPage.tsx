@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AppFrame, EmptyState } from '../components/AppFrame';
 import { loadCommunityProjects, getFavoriteProjectIds, toggleFavoriteProjectId } from '../lib/community';
-import { excerptText } from '../lib/richText';
+import { excerptText, toDisplayText } from '../lib/richText';
 import { C } from '../styles/tokens';
-import { CommunityProject } from '../types/bookBuddy';
+import { CommunityProject, PublishedChapterRow } from '../types/bookBuddy';
 
 function authorName(project: CommunityProject) {
   return project.profiles?.display_name || project.profiles?.username || 'Anonymous writer';
@@ -15,9 +15,76 @@ function projectTitle(project: CommunityProject) {
 
 function projectDescription(project: CommunityProject) {
   return excerptText(
-    project.content?.description || project.content?.logline || '',
+    String(project.content?.description || project.content?.logline || ''),
     'Published chapters from this story are now available in the community reader.',
     170,
+  );
+}
+
+function ChapterReader({
+  chapter,
+  onClose,
+}: {
+  chapter: PublishedChapterRow;
+  onClose: () => void;
+}) {
+  const body = toDisplayText(chapter.content || '');
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(47,53,69,0.32)',
+        zIndex: 20,
+        display: 'flex',
+        alignItems: 'flex-end',
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          width: '100%',
+          maxWidth: 520,
+          margin: '0 auto',
+          background: 'white',
+          borderRadius: '20px 20px 0 0',
+          padding: 24,
+          maxHeight: '90dvh',
+          overflowY: 'auto',
+          display: 'grid',
+          gap: 16,
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: 12 }}>
+          <h2 style={{ margin: 0, fontFamily: 'Lora, serif', fontSize: 22 }}>
+            {chapter.chapter_title || 'Untitled chapter'}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              border: 0,
+              background: 'transparent',
+              color: C.inkMuted,
+              fontSize: 22,
+              lineHeight: 1,
+              padding: 4,
+              flexShrink: 0,
+            }}
+          >
+            ×
+          </button>
+        </div>
+        <div style={{ color: C.inkMuted, fontSize: 12 }}>
+          Published {new Date(chapter.published_at).toLocaleDateString()}
+        </div>
+        <div style={{ color: C.ink, lineHeight: 1.8, fontSize: 16, whiteSpace: 'pre-wrap' }}>
+          {body || 'No content available.'}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -25,6 +92,7 @@ export function CommunityPage() {
   const [projects, setProjects] = useState<CommunityProject[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [readingChapter, setReadingChapter] = useState<PublishedChapterRow | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -35,9 +103,7 @@ export function CommunityPage() {
         Promise.resolve(getFavoriteProjectIds()),
       ]);
 
-      if (cancelled) {
-        return;
-      }
+      if (cancelled) return;
 
       setProjects(communityProjects);
       setFavoriteIds(favorites);
@@ -69,7 +135,7 @@ export function CommunityPage() {
       {!loading && !projects.length ? (
         <EmptyState
           title="Nothing public yet"
-          description="Be the first - publish a chapter from your project to appear here."
+          description="Be the first — publish a chapter from your project to appear here."
         />
       ) : null}
 
@@ -125,25 +191,30 @@ export function CommunityPage() {
 
             <div style={{ display: 'grid', gap: 8 }}>
               {chapters.length ? chapters.map((chapter) => (
-                <div
+                <button
                   key={chapter.id}
+                  type="button"
+                  onClick={() => setReadingChapter(chapter)}
                   style={{
+                    width: '100%',
+                    textAlign: 'left',
                     padding: 14,
                     borderRadius: 18,
                     background: 'rgba(255,247,243,0.95)',
                     border: `1px solid ${C.borderSoft}`,
+                    cursor: 'pointer',
                   }}
                 >
                   <div style={{ fontWeight: 700, marginBottom: 6 }}>
                     {chapter.chapter_title || 'Untitled chapter'}
                   </div>
                   <div style={{ color: C.inkSoft, lineHeight: 1.55 }}>
-                    {excerptText(chapter.content || '', 'No excerpt available.', 180)}
+                    {excerptText(toDisplayText(chapter.content || ''), 'Tap to read.', 180)}
                   </div>
-                  <div style={{ color: C.inkMuted, fontSize: 12, marginTop: 8 }}>
-                    Published {new Date(chapter.published_at).toLocaleDateString()}
+                  <div style={{ color: C.coral, fontSize: 12, marginTop: 8, fontWeight: 700 }}>
+                    Tap to read →
                   </div>
-                </div>
+                </button>
               )) : (
                 <div style={{ color: C.inkMuted, fontSize: 13 }}>
                   No published chapters yet.
@@ -153,6 +224,13 @@ export function CommunityPage() {
           </div>
         );
       })}
+
+      {readingChapter ? (
+        <ChapterReader
+          chapter={readingChapter}
+          onClose={() => setReadingChapter(null)}
+        />
+      ) : null}
     </AppFrame>
   );
 }

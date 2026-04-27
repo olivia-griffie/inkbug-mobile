@@ -171,12 +171,11 @@ export function AppFrame({
 export function ProjectTabs({ projectId }: { projectId: string }) {
   const tabs = [
     ['', 'Overview'],
-    ['/chapters', 'Chapters'],
-    ['/characters', 'Characters'],
     ['/plot', 'Plot'],
-    ['/locations', 'Locations'],
+    ['/characters', 'Characters'],
     ['/scenes', 'Scenes'],
-    ['/prompts', 'Prompts'],
+    ['/chapters', 'Chapters'],
+    ['/prompts', 'Challenges'],
   ] as const;
 
   return (

@@ -28,15 +28,22 @@ export type Chapter = {
 export type Character = {
   id: string;
   name: string;
+  appearance?: string;
+  background?: string;
+  secrets?: string;
+  desires?: string;
+  other?: string;
+  typeTags?: string[];
+  narrativeTags?: string[];
+  image?: string;
+  sectionIds?: string[];
+  // legacy fields kept for backwards-compat
   role?: string;
-  description?: string;
   age?: string;
   physicalDescription?: string;
   backstory?: string;
   motivations?: string;
-  typeTags?: string[];
-  narrativeTags?: string[];
-  sectionIds?: string[];
+  description?: string;
 };
 
 export type PlotSection = {

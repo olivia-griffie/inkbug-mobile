@@ -132,19 +132,6 @@ export function ChaptersPage() {
                 </div>
               </Link>
               <div style={{ display: 'grid', gap: 8, alignContent: 'start' }}>
-                <span
-                  style={{
-                    padding: '6px 10px',
-                    borderRadius: 999,
-                    background: isPublished ? 'rgba(79,242,201,0.18)' : 'rgba(255,106,90,0.1)',
-                    color: isPublished ? '#1a7a66' : C.coral,
-                    fontSize: 12,
-                    fontWeight: 700,
-                    textAlign: 'center',
-                  }}
-                >
-                  {isPublished ? 'Published' : 'Draft'}
-                </span>
                 <button
                   type="button"
                   onClick={() => void handlePublishToggle(chapter.id)}

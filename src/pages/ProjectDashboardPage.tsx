@@ -4,7 +4,6 @@ import { ProjectGate } from '../components/ProjectGate';
 import { useProject } from '../hooks/useProject';
 import { summarizeWordCount } from '../lib/projectData';
 import { syncProjectVisibility } from '../lib/community';
-import { toDisplayText } from '../lib/richText';
 import { cardStyle } from '../lib/ui';
 import { C } from '../styles/tokens';
 import { useAuth } from '../state/AuthContext';
@@ -19,11 +18,6 @@ export function ProjectDashboardPage() {
   if (!project) {
     return <ProjectGate />;
   }
-
-  const storySnapshot =
-    project.plotSections[0]?.summary ||
-    toDisplayText(project.raw.synopsis) ||
-    'Your synced section targets, scenes, and prompts are ready in the tabs above.';
 
   async function handleVisibilityToggle() {
     if (!session || !project) {
@@ -51,7 +45,7 @@ export function ProjectDashboardPage() {
           <div style={{ fontFamily: 'Lora, serif', fontSize: 28, marginBottom: 10 }}>
             {project.title}
           </div>
-          <div style={{ color: C.inkSoft, lineHeight: 1.6 }}>{toDisplayText(project.description)}</div>
+          <div style={{ color: C.inkSoft, lineHeight: 1.6 }}>{project.description}</div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
@@ -112,11 +106,6 @@ export function ProjectDashboardPage() {
           {statusMessage ? (
             <div style={{ color: C.coral, marginTop: 10, fontSize: 13 }}>{statusMessage}</div>
           ) : null}
-        </div>
-
-        <div style={{ ...cardStyle, padding: 20 }}>
-          <div style={{ fontWeight: 700, marginBottom: 10 }}>Story Snapshot</div>
-          <div style={{ color: C.inkSoft, lineHeight: 1.6 }}>{storySnapshot}</div>
         </div>
       </div>
     </ProjectGate>
