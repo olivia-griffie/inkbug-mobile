@@ -6,7 +6,7 @@ import { saveNormalizedProject } from '../lib/community';
 import { excerptText } from '../lib/richText';
 import { C } from '../styles/tokens';
 import { useAuth } from '../state/AuthContext';
-import { PlotSection } from '../types/bookBuddy';
+import { PlotSection, PlotWorkbook } from '../types/bookBuddy';
 
 const types = ['Act', 'Chapter', 'Scene'];
 const statuses = ['Draft', 'In Progress', 'Complete'];
@@ -33,7 +33,9 @@ export function PlotPage() {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [savingWorkbook, setSavingWorkbook] = useState(false);
   const [status, setStatus] = useState('');
+  const [workbookStatus, setWorkbookStatus] = useState('');
   const [form, setForm] = useState<PlotSection>({
     id: '',
     title: '',
@@ -43,8 +45,16 @@ export function PlotPage() {
     targetWords: 0,
     status: 'Draft',
   });
+  const [workbook, setWorkbook] = useState<PlotWorkbook>({
+    outline: '',
+    premise: '',
+    stakes: '',
+    notes: '',
+  });
+  const [workbookOpen, setWorkbookOpen] = useState(false);
 
   const plotSections = useMemo(() => project?.plotSections ?? [], [project]);
+  const chapters = useMemo(() => project?.chapters ?? [], [project]);
 
   function openForNew() {
     setEditingId(null);
@@ -57,6 +67,7 @@ export function PlotPage() {
       summary: '',
       targetWords: 0,
       status: 'Draft',
+      chapterIds: [],
     });
     setOpen(true);
   }
@@ -72,8 +83,30 @@ export function PlotPage() {
       summary: section.summary ?? '',
       targetWords: section.targetWords ?? 0,
       status: section.status ?? 'Draft',
+      chapterIds: section.chapterIds ?? [],
     });
     setOpen(true);
+  }
+
+  function openWorkbook() {
+    setWorkbook({
+      outline: project?.plotWorkbook?.outline ?? '',
+      premise: project?.plotWorkbook?.premise ?? '',
+      stakes: project?.plotWorkbook?.stakes ?? '',
+      notes: project?.plotWorkbook?.notes ?? '',
+    });
+    setWorkbookStatus('');
+    setWorkbookOpen(true);
+  }
+
+  function toggleChapterInSection(chapterId: string) {
+    const current = form.chapterIds ?? [];
+    setForm({
+      ...form,
+      chapterIds: current.includes(chapterId)
+        ? current.filter((item) => item !== chapterId)
+        : [...current, chapterId],
+    });
   }
 
   async function handleSave() {
@@ -111,19 +144,77 @@ export function PlotPage() {
     }
   }
 
+  async function handleWorkbookSave() {
+    if (!project || !session?.user.id) {
+      return;
+    }
+
+    setSavingWorkbook(true);
+    setWorkbookStatus('');
+    try {
+      await saveNormalizedProject(
+        {
+          ...project,
+          plotWorkbook: workbook,
+        },
+        session.user.id,
+      );
+      await reload();
+      setWorkbookOpen(false);
+    } catch (error) {
+      setWorkbookStatus(error instanceof Error ? error.message : 'Could not save workbook.');
+    } finally {
+      setSavingWorkbook(false);
+    }
+  }
+
+  const wb = project?.plotWorkbook;
+  const workbookHasContent = wb?.outline || wb?.premise || wb?.stakes || wb?.notes;
+
   return (
     <ProjectGate title="Plot">
+      <button
+        type="button"
+        onClick={openWorkbook}
+        style={{
+          width: '100%',
+          textAlign: 'left' as const,
+          background: C.card,
+          border: 0,
+          borderRadius: 12,
+          padding: 16,
+          boxShadow: '0 6px 16px rgba(47,53,69,0.07)',
+          marginBottom: 12,
+        }}
+      >
+        <div style={{ color: C.coral, fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Plot workbook</div>
+        <div style={{ color: C.ink, fontWeight: 600, marginBottom: 6 }}>Outline, Premise & Stakes</div>
+        <div style={{ color: C.inkSoft, lineHeight: 1.5, fontSize: 14 }}>
+          {workbookHasContent
+            ? excerptText(wb?.premise || wb?.outline || wb?.stakes || wb?.notes || '', '', 160)
+            : 'Tap to add your story outline, premise, stakes, and notes.'}
+        </div>
+      </button>
+
       <div style={{ display: 'grid', gap: 12 }}>
-        {plotSections.map((section, index) => (
-          <button key={section.id} type="button" onClick={() => openForEdit(section)} style={cardButtonStyle}>
-            <div style={{ color: C.ink, fontWeight: 600, marginBottom: 6 }}>
-              {section.title || section.name || `Section Target ${index + 1}`}
-            </div>
-            <div style={{ color: C.inkSoft, lineHeight: 1.5 }}>
-              {excerptText(section.summary || section.description || section.notes || '', 'Tap to add a summary.', 180)}
-            </div>
-          </button>
-        ))}
+        {plotSections.map((section, index) => {
+          const linkedChapterCount = section.chapterIds?.length ?? 0;
+          return (
+            <button key={section.id} type="button" onClick={() => openForEdit(section)} style={cardButtonStyle}>
+              <div style={{ color: C.ink, fontWeight: 600, marginBottom: 6 }}>
+                {section.title || section.name || `Section Target ${index + 1}`}
+              </div>
+              {linkedChapterCount > 0 ? (
+                <div style={{ color: C.coral, fontSize: 12, fontWeight: 700, marginBottom: 4 }}>
+                  {linkedChapterCount} chapter{linkedChapterCount !== 1 ? 's' : ''} linked
+                </div>
+              ) : null}
+              <div style={{ color: C.inkSoft, lineHeight: 1.5 }}>
+                {excerptText(section.summary || section.description || section.notes || '', 'Tap to add a summary.', 180)}
+              </div>
+            </button>
+          );
+        })}
       </div>
 
       <button type="button" onClick={openForNew} style={fabStyle}>+</button>
@@ -169,11 +260,83 @@ export function PlotPage() {
                   <option key={item} value={item}>{item}</option>
                 ))}
               </select>
+              {chapters.length > 0 ? (
+                <div>
+                  <div style={{ color: C.ink, fontWeight: 600, marginBottom: 10 }}>Linked chapters</div>
+                  <div style={{ display: 'grid', gap: 8 }}>
+                    {chapters.map((chapter, index) => {
+                      const label = chapter.title || `Chapter ${index + 1}`;
+                      const selected = (form.chapterIds ?? []).includes(chapter.id);
+                      return (
+                        <label key={chapter.id} style={{ display: 'flex', gap: 10, color: C.inkSoft }}>
+                          <input
+                            type="checkbox"
+                            checked={selected}
+                            onChange={() => toggleChapterInSection(chapter.id)}
+                          />
+                          <span>{label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
               <button type="button" onClick={() => void handleSave()} disabled={saving} style={saveButtonStyle}>
                 {saving ? 'Saving...' : 'Save'}
               </button>
               <button type="button" onClick={() => setOpen(false)} style={cancelButtonStyle}>Cancel</button>
               {status ? <div style={{ color: C.coral, fontSize: 13 }}>{status}</div> : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {workbookOpen ? (
+        <div style={overlayStyle}>
+          <div style={sheetStyle}>
+            <div style={{ display: 'grid', gap: 14 }}>
+              <div style={{ color: C.ink, fontWeight: 700, fontSize: 16 }}>Plot workbook</div>
+              <div>
+                <div style={{ color: C.inkMuted, fontSize: 12, marginBottom: 6 }}>Outline</div>
+                <textarea
+                  value={workbook.outline ?? ''}
+                  onChange={(event) => setWorkbook({ ...workbook, outline: event.target.value })}
+                  placeholder="High-level story outline"
+                  style={areaStyle}
+                />
+              </div>
+              <div>
+                <div style={{ color: C.inkMuted, fontSize: 12, marginBottom: 6 }}>Premise</div>
+                <textarea
+                  value={workbook.premise ?? ''}
+                  onChange={(event) => setWorkbook({ ...workbook, premise: event.target.value })}
+                  placeholder="What is this story about?"
+                  style={areaStyle}
+                />
+              </div>
+              <div>
+                <div style={{ color: C.inkMuted, fontSize: 12, marginBottom: 6 }}>Stakes</div>
+                <textarea
+                  value={workbook.stakes ?? ''}
+                  onChange={(event) => setWorkbook({ ...workbook, stakes: event.target.value })}
+                  placeholder="What does the protagonist stand to lose?"
+                  style={areaStyle}
+                />
+              </div>
+              <div>
+                <div style={{ color: C.inkMuted, fontSize: 12, marginBottom: 6 }}>Notes</div>
+                <textarea
+                  value={workbook.notes ?? ''}
+                  onChange={(event) => setWorkbook({ ...workbook, notes: event.target.value })}
+                  placeholder="Any other plot notes"
+                  style={areaStyle}
+                />
+              </div>
+              <button type="button" onClick={() => void handleWorkbookSave()} disabled={savingWorkbook} style={saveButtonStyle}>
+                {savingWorkbook ? 'Saving...' : 'Save workbook'}
+              </button>
+              <button type="button" onClick={() => setWorkbookOpen(false)} style={cancelButtonStyle}>Cancel</button>
+              {workbookStatus ? <div style={{ color: C.coral, fontSize: 13 }}>{workbookStatus}</div> : null}
             </div>
           </div>
         </div>

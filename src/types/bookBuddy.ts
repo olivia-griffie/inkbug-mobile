@@ -50,6 +50,7 @@ export type PlotSection = {
   status?: string;
   targetWords?: number;
   type?: string;
+  chapterIds?: string[];
 };
 
 export type LocationItem = {

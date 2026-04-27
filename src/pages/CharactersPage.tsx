@@ -8,7 +8,15 @@ import { C } from '../styles/tokens';
 import { useAuth } from '../state/AuthContext';
 import { Character } from '../types/bookBuddy';
 
-const roles = ['Protagonist', 'Antagonist', 'Supporting', 'Minor'];
+const roles = [
+  'Protagonist',
+  'Antagonist',
+  'Love Interest',
+  'Confidant',
+  'Deuteragonist',
+  'Tertiary Character',
+  'Foil',
+];
 
 const fieldStyle = {
   width: '100%',
